@@ -1,0 +1,21 @@
+[build]
+  publish = "."
+
+[[edge_functions]]
+  function = "api"
+  path = "/api/*"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Cache-Control = "no-store"
+
+[[headers]]
+  for = "/css/*"
+  [headers.values]
+    Cache-Control = "max-age=86400"
+
+[[headers]]
+  for = "/js/*"
+  [headers.values]
+    Cache-Control = "max-age=86400"

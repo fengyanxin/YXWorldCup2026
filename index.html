@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>2026 世界杯 | 赛程 · 榜单 · 集锦 · 直播</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="pitch-overlay"></div>
+  <div class="spotlight spotlight-1"></div>
+  <div class="spotlight spotlight-2"></div>
+
+  <!-- 导航 -->
+  <header class="header">
+    <div class="header-inner">
+      <div class="logo">
+        <span class="logo-icon">🏆</span>
+        <div class="logo-text">
+          <span class="logo-title">WORLD CUP</span>
+          <span class="logo-sub">2026 · 美加墨</span>
+        </div>
+      </div>
+      <nav class="nav" id="mainNav">
+        <a href="#home" class="nav-link active" data-section="home">首页</a>
+        <a href="#schedule" class="nav-link" data-section="schedule">赛程</a>
+        <a href="#standings" class="nav-link" data-section="standings">榜单</a>
+        <a href="#highlights" class="nav-link" data-section="highlights">集锦</a>
+        <a href="#live" class="nav-link" data-section="live">
+          <span class="live-dot"></span>直播
+        </a>
+      </nav>
+      <button class="menu-toggle" id="menuToggle" aria-label="菜单">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </header>
+
+  <main>
+    <!-- 首页 Hero -->
+    <section id="home" class="section section-active hero">
+      <div class="hero-content">
+        <div class="hero-badge">FIFA WORLD CUP 2026™</div>
+        <h1 class="hero-title">
+          <span class="hero-line">激情盛夏</span>
+          <span class="hero-line accent">48 强争霸</span>
+        </h1>
+        <p class="hero-desc">美国 · 加拿大 · 墨西哥联合举办<br>6月11日 — 7月19日 · 16座球场 · 104场比赛</p>
+        <div class="hero-stats" id="heroStats"></div>
+        <div class="hero-actions">
+          <button class="btn btn-primary" data-goto="live">
+            <span class="live-dot"></span> 观看直播
+          </button>
+          <button class="btn btn-secondary" data-goto="schedule">查看赛程</button>
+        </div>
+      </div>
+      <div class="hero-matches" id="heroMatches"></div>
+    </section>
+
+    <!-- 赛程 -->
+    <section id="schedule" class="section">
+      <div class="section-header">
+        <h2 class="section-title">比赛赛程</h2>
+        <p class="section-sub">默认展示今日赛程 · 按开球时间排列 · 北京时间</p>
+      </div>
+      <div class="filter-bar">
+        <div class="filter-group">
+          <button class="filter-btn active" data-filter="all">全部</button>
+          <button class="filter-btn" data-filter="live">进行中</button>
+          <button class="filter-btn" data-filter="upcoming">未开始</button>
+          <button class="filter-btn" data-filter="finished">已结束</button>
+        </div>
+        <select class="filter-select" id="groupFilter">
+          <option value="all">所有小组</option>
+        </select>
+      </div>
+      <div class="schedule-toolbar">
+        <div class="schedule-date-nav" id="scheduleDateNav"></div>
+        <div class="schedule-toolbar-right">
+          <span class="schedule-summary" id="scheduleSummary"></span>
+          <input type="date" class="filter-date filter-date-compact" id="dateFilter" title="跳转到指定日期">
+        </div>
+      </div>
+      <div class="schedule-day-header" id="scheduleDayHeader"></div>
+      <div class="schedule-list" id="scheduleList"></div>
+    </section>
+
+    <!-- 榜单 -->
+    <section id="standings" class="section">
+      <div class="section-header">
+        <h2 class="section-title">积分榜 & 射手榜</h2>
+        <p class="section-sub">12 个小组排名 · 金靴奖争夺</p>
+      </div>
+      <div class="standings-tabs">
+        <button class="tab-btn active" data-tab="groups">小组积分榜</button>
+        <button class="tab-btn" data-tab="scorers">射手榜</button>
+      </div>
+      <div class="tab-panel active" id="groupsPanel">
+        <div class="group-selector" id="groupSelector"></div>
+        <div class="standings-table-wrap" id="standingsTable"></div>
+        <div class="all-groups-grid" id="allGroupsGrid"></div>
+      </div>
+      <div class="tab-panel" id="scorersPanel">
+        <div class="scorers-table-wrap" id="scorersTable"></div>
+      </div>
+    </section>
+
+    <!-- 精彩集锦 -->
+    <section id="highlights" class="section">
+      <div class="section-header">
+        <h2 class="section-title">精彩视频集锦</h2>
+        <p class="section-sub" id="highlightsSub">进球 · 扑救 · 冷门 · 经典瞬间</p>
+      </div>
+      <div class="highlights-toolbar">
+        <div class="highlights-filter">
+          <button class="hl-filter-btn active" data-hl-filter="all">全部</button>
+          <button class="hl-filter-btn" data-hl-filter="goal">进球</button>
+          <button class="hl-filter-btn" data-hl-filter="save">扑救</button>
+          <button class="hl-filter-btn" data-hl-filter="upset">冷门</button>
+          <button class="hl-filter-btn" data-hl-filter="classic">经典</button>
+        </div>
+        <input type="search" class="hl-search" id="hlSearch" placeholder="搜索球队、球员、关键词...">
+      </div>
+      <div class="highlights-grid" id="highlightsGrid"></div>
+      <div class="highlights-footer">
+        <span class="hl-count" id="hlCount"></span>
+        <button class="btn btn-secondary" id="hlLoadMore">加载更多</button>
+      </div>
+      <div class="video-modal" id="videoModal">
+        <div class="video-modal-backdrop"></div>
+        <div class="video-modal-content">
+          <button class="video-modal-close" id="videoModalClose">&times;</button>
+          <div class="video-player" id="videoPlayer"></div>
+          <div class="video-info" id="videoInfo"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 直播观赛 -->
+    <section id="live" class="section">
+      <div class="section-header">
+        <h2 class="section-title">直播观赛</h2>
+        <p class="section-sub">实时比分 · 文字直播 · 官方转播</p>
+      </div>
+      <div class="live-layout">
+        <div class="live-main">
+          <div class="live-player-card" id="livePlayerCard">
+            <div class="live-badge-large"><span class="live-dot"></span> LIVE</div>
+            <div class="live-scoreboard" id="liveScoreboard"></div>
+            <div class="live-stream" id="liveStream"></div>
+            <div class="live-controls" id="liveControls"></div>
+          </div>
+          <div class="commentary-box">
+            <h3>文字直播</h3>
+            <div class="commentary-feed" id="commentaryFeed"></div>
+          </div>
+        </div>
+        <aside class="live-sidebar">
+          <div class="sidebar-card">
+            <h3>今日赛程</h3>
+            <div class="today-matches" id="todayMatches"></div>
+          </div>
+          <div class="sidebar-card">
+            <h3>官方转播平台</h3>
+            <div class="broadcasters" id="broadcasters"></div>
+          </div>
+          <div class="sidebar-card">
+            <h3>金靴争夺</h3>
+            <div class="mini-scorers" id="miniScorers"></div>
+          </div>
+        </aside>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>2026 FIFA World Cup™ · 实时数据来自 <a href="https://worldcup26.ir" target="_blank" rel="noopener">worldcup26.ir</a> · 非官方产品</p>
+    <p>主办城市：纽约 · 洛杉矶 · 墨西哥城 · 多伦多 · 温哥华 等 16 座城市</p>
+  </footer>
+
+  <script src="js/data.js"></script>
+  <script src="js/timezone.js"></script>
+  <script src="js/team-map.js"></script>
+  <script src="js/video-map.js"></script>
+  <script src="js/highlights-gen.js"></script>
+  <script src="js/live-data.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
