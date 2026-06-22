@@ -221,7 +221,7 @@ const WC2026 = {
     { id: 103, date: '2026-07-19', time: '05:00', timeET: '17:00 ET', group: 'KO', home: '待定', homeFlag: '⚽', away: '待定', awayFlag: '⚽', venue: '迈阿密', status: 'upcoming', score: null, stage: '三四名决赛' },
     { id: 104, date: '2026-07-20', time: '03:00', timeET: '15:00 ET', group: 'KO', home: '待定', homeFlag: '⚽', away: '待定', awayFlag: '⚽', venue: '纽约/新泽西', status: 'upcoming', score: null, stage: '决赛' }
   ],
-  // 集锦由 highlights-gen.js 根据赛程动态生成（500+ 条）
+  // 集锦由 highlights.js + fetch-highlights.py 多平台聚合
   highlights: [],
 
   broadcasters: [

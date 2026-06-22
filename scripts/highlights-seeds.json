@@ -1,0 +1,63 @@
+[
+  {
+    "platform": "migu",
+    "platformLabel": "咪咕视频",
+    "title": "2026 美加墨世界杯 · 全场次回放与集锦",
+    "author": "咪咕视频",
+    "pageUrl": "https://www.miguvideo.com/mgs/website/prd/sportLive.html",
+    "category": "classic",
+    "tags": ["官方转播", "回放", "集锦"],
+    "matchLabel": "世界杯专区"
+  },
+  {
+    "platform": "yangshipin",
+    "platformLabel": "央视频",
+    "title": "开幕式：夏奇拉演唱主题曲《Dai Dai》",
+    "author": "央视网",
+    "pageUrl": "https://sports.cctv.com/2026/06/12/VIDE00goV9oMyry9rdBeNSBB260612.shtml",
+    "category": "classic",
+    "tags": ["开幕式", "夏奇拉", "主题曲"],
+    "matchLabel": "世界杯开幕"
+  },
+  {
+    "platform": "yangshipin",
+    "platformLabel": "央视频",
+    "title": "央视频 · 2026 世界杯赛事专区",
+    "author": "央视频",
+    "pageUrl": "https://www.yangshipin.cn/",
+    "category": "classic",
+    "tags": ["央视", "官方", "直播回放"],
+    "matchLabel": "世界杯专区"
+  },
+  {
+    "platform": "douyin",
+    "platformLabel": "抖音",
+    "title": "2026 美加墨世界杯全场次回放都在咪咕视频",
+    "author": "咪咕体育",
+    "pageUrl": "https://www.douyin.com/video/7651839306882119130",
+    "category": "classic",
+    "tags": ["回放", "咪咕", "世界杯"],
+    "matchLabel": "世界杯观赛指南"
+  },
+  {
+    "platform": "xiaohongshu",
+    "platformLabel": "小红书",
+    "title": "2026 世界杯观赛笔记与现场 Vlog 合集",
+    "author": "小红书",
+    "pageUrl": "https://www.xiaohongshu.com/search_result?keyword=2026%20%E4%B8%96%E7%95%8C%E6%9D%AF&source=web_search_result_notes",
+    "category": "classic",
+    "tags": ["Vlog", "现场", "球迷"],
+    "matchLabel": "世界杯话题"
+  },
+  {
+    "platform": "bilibili",
+    "platformLabel": "B站",
+    "bvid": "BV1J2VW6KEt6",
+    "title": "夏奇拉 × Burna Boy - Dai Dai 官方 MV",
+    "author": "shakiraVEVO",
+    "pageUrl": "https://www.bilibili.com/video/BV1J2VW6KEt6/",
+    "category": "classic",
+    "tags": ["主题曲", "夏奇拉", "官方"],
+    "matchLabel": "世界杯主题曲"
+  }
+]

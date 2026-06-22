@@ -30,6 +30,12 @@ function initNav() {
 
     document.body.classList.toggle('home-view', id === 'home');
 
+    if (id === 'home') {
+      resumeHeroVideo();
+    } else {
+      clearHeroVideoLoop();
+    }
+
     $('#mainNav')?.classList.remove('open');
     window.scrollTo({ top: 0, behavior: id === 'home' ? 'auto' : 'smooth' });
   }
@@ -53,13 +59,48 @@ function initNav() {
 }
 
 /* ===== Hero Video Background ===== */
-let heroVideoLoaded = false;
 let heroVideoLoopTimer = null;
+
+function mountHeroPlayer() {
+  const frame = $('#heroVideoFrame');
+  if (!frame || typeof buildAnthemEmbedSrc !== 'function') return;
+  const src = buildAnthemEmbedSrc(ANTHEM_VIDEO);
+  frame.innerHTML = `
+    <iframe
+      src="${src}"
+      title="${ANTHEM_VIDEO.title} — ${ANTHEM_VIDEO.artists}"
+      scrolling="no"
+      allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+      referrerpolicy="no-referrer-when-downgrade"
+      tabindex="-1"></iframe>`;
+}
+
+function clearHeroVideoLoop() {
+  if (heroVideoLoopTimer) {
+    window.clearTimeout(heroVideoLoopTimer);
+    heroVideoLoopTimer = null;
+  }
+}
+
+function scheduleHeroVideoLoop() {
+  clearHeroVideoLoop();
+  if (!ANTHEM_VIDEO.durationSec) return;
+  heroVideoLoopTimer = window.setTimeout(() => {
+    mountHeroPlayer();
+    scheduleHeroVideoLoop();
+  }, ANTHEM_VIDEO.durationSec * 1000 + 600);
+}
+
+function resumeHeroVideo() {
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  mountHeroPlayer();
+  scheduleHeroVideoLoop();
+}
 
 function initHeroVideo() {
   const frame = $('#heroVideoFrame');
   const link = $('#heroAnthemLink');
-  if (!frame || typeof ANTHEM_VIDEO === 'undefined' || typeof buildAnthemEmbedSrc !== 'function') return;
+  if (!frame || typeof ANTHEM_VIDEO === 'undefined') return;
 
   if (ANTHEM_VIDEO.poster) {
     frame.style.backgroundImage = `url('${ANTHEM_VIDEO.poster}')`;
@@ -73,30 +114,13 @@ function initHeroVideo() {
 
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
-  const mountPlayer = () => {
-    const src = buildAnthemEmbedSrc(ANTHEM_VIDEO);
-    frame.innerHTML = `
-      <iframe
-        src="${src}"
-        title="${ANTHEM_VIDEO.title} — ${ANTHEM_VIDEO.artists}"
-        scrolling="no"
-        allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
-        referrerpolicy="no-referrer-when-downgrade"
-        loading="lazy"
-        tabindex="-1"></iframe>`;
-  };
+  resumeHeroVideo();
 
-  const loadVideo = () => {
-    if (heroVideoLoaded) return;
-    heroVideoLoaded = true;
-    mountPlayer();
-
-    if (ANTHEM_VIDEO.provider === 'bilibili' && ANTHEM_VIDEO.durationSec) {
-      heroVideoLoopTimer = window.setInterval(mountPlayer, ANTHEM_VIDEO.durationSec * 1000 - 3000);
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden && document.body.classList.contains('home-view')) {
+      resumeHeroVideo();
     }
-  };
-
-  loadVideo();
+  });
 }
 
 /* ===== Hero ===== */
@@ -582,173 +606,16 @@ function initStandingsTabs() {
   });
 }
 
-/* ===== Highlights ===== */
-let allHighlights = [];
-let highlightFilter = 'all';
-let highlightSearch = '';
-let highlightPage = 1;
-const HL_PAGE_SIZE = 36;
-
-const HL_CATEGORY = {
-  goal: '进球',
-  save: '扑救',
-  upset: '冷门',
-  classic: '经典',
-};
-
-function initHighlightsData() {
-  allHighlights = generateAllHighlights(WC2026.matches);
-  WC2026.highlights = allHighlights;
-  $('#highlightsSub').textContent =
-    `基于 ${WC2026.matches.length} 场比赛自动生成 · 共 ${allHighlights.length} 条 · 视频源自 FIFA / FOX Sports 官方 YouTube`;
-}
-
-function getFilteredHighlights() {
-  let items = allHighlights;
-  if (highlightFilter !== 'all') {
-    items = items.filter((h) => h.category === highlightFilter);
-  }
-  if (highlightSearch.trim()) {
-    const q = highlightSearch.trim().toLowerCase();
-    items = items.filter(
-      (h) =>
-        h.title.toLowerCase().includes(q) ||
-        h.match.toLowerCase().includes(q) ||
-        h.tags.some((t) => t.toLowerCase().includes(q))
-    );
-  }
-  return items;
-}
-
-function highlightCardHtml(h) {
-  const sourceBadge = h.videoSource
-    ? `<span class="highlight-source">${h.videoSource}</span>`
-    : '';
-  return `
-    <div class="highlight-card" data-highlight-id="${h.id}">
-      <div class="highlight-thumb">
-        <img src="${h.thumbnail}" alt="${h.title}" loading="lazy">
-        <div class="play-btn"><div class="play-icon">▶</div></div>
-        <span class="highlight-duration">${h.duration}</span>
-        ${h.category ? `<span class="highlight-cat">${HL_CATEGORY[h.category] || h.category}</span>` : ''}
-        ${sourceBadge}
-      </div>
-      <div class="highlight-body">
-        <div class="highlight-title">${h.title}</div>
-        <div class="highlight-meta">
-          <span>${h.match}</span>
-          <span>${h.views} 次观看</span>
-        </div>
-        <div class="highlight-tags">
-          ${h.tags.map((t) => `<span class="highlight-tag">${t}</span>`).join('')}
-        </div>
-      </div>
-    </div>`;
-}
-
-function renderHighlights() {
-  const filtered = getFilteredHighlights();
-  const end = highlightPage * HL_PAGE_SIZE;
-  const slice = filtered.slice(0, end);
-
-  if (slice.length === 0) {
-    $('#highlightsGrid').innerHTML =
-      '<p style="color:var(--text-dim);text-align:center;padding:40px;grid-column:1/-1;">未找到匹配的视频</p>';
-    $('#hlCount').textContent = '共 0 条';
-    $('#hlLoadMore').style.display = 'none';
-    return;
-  }
-
-  const html = slice.map(highlightCardHtml).join('');
-  $('#highlightsGrid').innerHTML = html;
-
-  $$('.highlight-card').forEach((card) => {
-    card.addEventListener('click', () => {
-      const h = allHighlights.find((x) => x.id === Number(card.dataset.highlightId));
-      if (h) openVideoModal(h);
-    });
-  });
-
-  $('#hlCount').textContent = `显示 ${slice.length} / 共 ${filtered.length} 条（总计 ${allHighlights.length} 条）`;
-  const loadBtn = $('#hlLoadMore');
-  if (slice.length < filtered.length) {
-    loadBtn.style.display = 'inline-flex';
-    loadBtn.textContent = `加载更多（还有 ${filtered.length - slice.length} 条）`;
+/* ===== Highlights（多平台真实视频，见 highlights.js） ===== */
+function refreshHighlightsDeferred() {
+  const run = () => {
+    Highlights.load().then(() => Highlights.render());
+  };
+  if ('requestIdleCallback' in window) {
+    requestIdleCallback(run, { timeout: 1200 });
   } else {
-    loadBtn.style.display = 'none';
+    setTimeout(run, 0);
   }
-}
-
-function initHighlightFilters() {
-  $$('.hl-filter-btn').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      $$('.hl-filter-btn').forEach((b) => b.classList.remove('active'));
-      btn.classList.add('active');
-      highlightFilter = btn.dataset.hlFilter;
-      highlightPage = 1;
-      renderHighlights();
-    });
-  });
-
-  $('#hlSearch').addEventListener('input', (e) => {
-    highlightSearch = e.target.value;
-    highlightPage = 1;
-    renderHighlights();
-  });
-
-  $('#hlLoadMore').addEventListener('click', () => {
-    highlightPage++;
-    renderHighlights();
-  });
-}
-
-function openVideoModal(h) {
-  const modal = $('#videoModal');
-  const player = $('#videoPlayer');
-  const info = $('#videoInfo');
-
-  if (h.videoId && !h.pending) {
-    player.innerHTML = `
-      <iframe src="https://www.youtube.com/embed/${h.videoId}?autoplay=1&rel=0"
-        title="${h.title}"
-        allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>`;
-  } else {
-    player.innerHTML = `
-      <div class="video-pending">
-        <div class="video-pending-icon">📺</div>
-        <p>该场次官方 YouTube 集锦正在发布中</p>
-        <p class="video-pending-sub">请通过下方链接前往 FIFA / FOX 官方平台观看</p>
-      </div>`;
-  }
-
-  const links = [];
-  if (h.videoUrl && h.videoId) {
-    links.push(`<a class="video-link" href="${h.videoUrl}" target="_blank" rel="noopener">在 YouTube 观看</a>`);
-  }
-  if (h.externalUrl) {
-    links.push(`<a class="video-link" href="${h.externalUrl}" target="_blank" rel="noopener">FIFA 官方集锦</a>`);
-  }
-  if (h.foxUrl) {
-    links.push(`<a class="video-link video-link-fox" href="${h.foxUrl}" target="_blank" rel="noopener">FOX Sports 集锦</a>`);
-  }
-
-  const sourceLabel = h.videoSource ? `<span class="video-source-tag">${h.videoSource}</span>` : '';
-
-  info.innerHTML = `
-    <h3>${h.title}</h3>
-    <p>${h.match} ${sourceLabel}</p>
-    <div class="video-links">${links.join('')}</div>`;
-  modal.classList.add('open');
-}
-
-function initVideoModal() {
-  $('#videoModalClose').addEventListener('click', closeVideoModal);
-  $('.video-modal-backdrop').addEventListener('click', closeVideoModal);
-}
-
-function closeVideoModal() {
-  $('#videoModal').classList.remove('open');
-  $('#videoPlayer').innerHTML = '';
 }
 
 /* ===== Live ===== */
@@ -905,18 +772,6 @@ function refreshCoreViews() {
   renderLive();
 }
 
-function refreshHighlightsDeferred() {
-  const run = () => {
-    initHighlightsData();
-    renderHighlights();
-  };
-  if ('requestIdleCallback' in window) {
-    requestIdleCallback(run, { timeout: 1200 });
-  } else {
-    setTimeout(run, 0);
-  }
-}
-
 function refreshAllViews() {
   refreshCoreViews();
   refreshHighlightsDeferred();
@@ -927,8 +782,8 @@ document.addEventListener('DOMContentLoaded', () => {
   document.body.classList.toggle('home-view', $('#home')?.classList.contains('section-active'));
   initScheduleFilters();
   initStandingsTabs();
-  initVideoModal();
-  initHighlightFilters();
+  Highlights.init();
+
   initHeroVideo();
 
   function onDataReady() {
@@ -936,13 +791,11 @@ document.addEventListener('DOMContentLoaded', () => {
     refreshHighlightsDeferred();
   }
 
-  // 先用本地/快照数据立即渲染，API 返回后再静默更新
-  initHighlightsData();
   refreshCoreViews();
 
   LiveData.init(onDataReady);
 
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') closeVideoModal();
+    if (e.key === 'Escape') Highlights.closeModal();
   });
 });

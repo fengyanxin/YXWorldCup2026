@@ -63,6 +63,27 @@ export default async (request) => {
     }
   }
 
+  if (endpoint.startsWith('/highlights')) {
+    try {
+      const origin = url.origin;
+      const res = await fetch(`${origin}/data/highlights.json`, {
+        headers: { Accept: 'application/json' },
+      });
+      if (!res.ok) throw new Error(`highlights.json → ${res.status}`);
+      const body = await res.text();
+      return new Response(body, {
+        status: 200,
+        headers: {
+          'Content-Type': 'application/json; charset=utf-8',
+          'Access-Control-Allow-Origin': '*',
+          'Cache-Control': 'no-store',
+        },
+      });
+    } catch (err) {
+      return jsonResponse({ error: String(err) }, 502);
+    }
+  }
+
   if (!ALLOWED_PREFIXES.some((p) => endpoint.startsWith(p))) {
     return jsonResponse({ error: 'API route not allowed' }, 404);
   }

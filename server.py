@@ -14,6 +14,7 @@ from urllib.parse import parse_qs, urlparse
 
 PORT = 8765
 ROOT = os.path.dirname(os.path.abspath(__file__))
+HIGHLIGHTS_JSON = os.path.join(ROOT, 'data', 'highlights.json')
 API_BASE = 'https://worldcup26.ir'
 ALLOWED_API_PREFIXES = ('/get/games', '/get/groups', '/get/teams', '/get/stadiums', '/get/game/')
 SYNC_ENDPOINTS = ('/get/games', '/get/groups', '/get/teams')
@@ -97,10 +98,36 @@ class Handler(SimpleHTTPRequestHandler):
         if parsed.path == '/api/sync':
             self.proxy_sync(parsed.query)
             return
+        if parsed.path == '/api/highlights':
+            self.serve_highlights()
+            return
         if parsed.path.startswith('/api/'):
             self.proxy_api(parsed.path[4:] + (f'?{parsed.query}' if parsed.query else ''))
             return
         super().do_GET()
+
+    def serve_highlights(self):
+        try:
+            with open(HIGHLIGHTS_JSON, encoding='utf-8') as f:
+                body = f.read().encode('utf-8')
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/json; charset=utf-8')
+            self.send_header('Access-Control-Allow-Origin', '*')
+            self.send_header('Cache-Control', 'no-store')
+            self.end_headers()
+            self.wfile.write(body)
+        except FileNotFoundError:
+            self.send_response(404)
+            self.send_header('Content-Type', 'application/json')
+            self.send_header('Access-Control-Allow-Origin', '*')
+            self.end_headers()
+            self.wfile.write(json.dumps({'error': 'highlights.json not found'}, ensure_ascii=False).encode())
+        except Exception as exc:
+            self.send_response(500)
+            self.send_header('Content-Type', 'application/json')
+            self.send_header('Access-Control-Allow-Origin', '*')
+            self.end_headers()
+            self.wfile.write(json.dumps({'error': str(exc)}, ensure_ascii=False).encode())
 
     def proxy_sync(self, query_string=''):
         force = parse_qs(query_string).get('force', ['0'])[0] in ('1', 'true', 'yes')

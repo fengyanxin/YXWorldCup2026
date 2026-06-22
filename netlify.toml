@@ -1,5 +1,5 @@
 [build]
-  command = "python3 scripts/fetch-snapshot.py"
+  command = "python3 scripts/fetch-snapshot.py && python3 scripts/fetch-highlights.py"
   publish = "."
 
 [[edge_functions]]
