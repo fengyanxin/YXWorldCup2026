@@ -28,8 +28,10 @@ function initNav() {
     const link = $(`.nav-link[data-section="${id}"]`);
     if (link) link.classList.add('active');
 
+    document.body.classList.toggle('home-view', id === 'home');
+
     $('#mainNav')?.classList.remove('open');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0, behavior: id === 'home' ? 'auto' : 'smooth' });
   }
 
   links.forEach((link) => {
@@ -48,6 +50,53 @@ function initNav() {
   });
 
   return showSection;
+}
+
+/* ===== Hero Video Background ===== */
+let heroVideoLoaded = false;
+let heroVideoLoopTimer = null;
+
+function initHeroVideo() {
+  const frame = $('#heroVideoFrame');
+  const link = $('#heroAnthemLink');
+  if (!frame || typeof ANTHEM_VIDEO === 'undefined' || typeof buildAnthemEmbedSrc !== 'function') return;
+
+  if (ANTHEM_VIDEO.poster) {
+    frame.style.backgroundImage = `url('${ANTHEM_VIDEO.poster}')`;
+  }
+
+  if (link) {
+    link.href = getAnthemWatchUrl(ANTHEM_VIDEO);
+    const sourceLabel = ANTHEM_VIDEO.provider === 'bilibili' ? 'B 站' : 'YouTube';
+    link.textContent = `🎵 ${ANTHEM_VIDEO.title} · ${ANTHEM_VIDEO.artists} · ${sourceLabel} 观看 MV`;
+  }
+
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+  const mountPlayer = () => {
+    const src = buildAnthemEmbedSrc(ANTHEM_VIDEO);
+    frame.innerHTML = `
+      <iframe
+        src="${src}"
+        title="${ANTHEM_VIDEO.title} — ${ANTHEM_VIDEO.artists}"
+        scrolling="no"
+        allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+        referrerpolicy="no-referrer-when-downgrade"
+        loading="lazy"
+        tabindex="-1"></iframe>`;
+  };
+
+  const loadVideo = () => {
+    if (heroVideoLoaded) return;
+    heroVideoLoaded = true;
+    mountPlayer();
+
+    if (ANTHEM_VIDEO.provider === 'bilibili' && ANTHEM_VIDEO.durationSec) {
+      heroVideoLoopTimer = window.setInterval(mountPlayer, ANTHEM_VIDEO.durationSec * 1000 - 3000);
+    }
+  };
+
+  loadVideo();
 }
 
 /* ===== Hero ===== */
@@ -875,10 +924,12 @@ function refreshAllViews() {
 
 document.addEventListener('DOMContentLoaded', () => {
   const showSection = initNav();
+  document.body.classList.toggle('home-view', $('#home')?.classList.contains('section-active'));
   initScheduleFilters();
   initStandingsTabs();
   initVideoModal();
   initHighlightFilters();
+  initHeroVideo();
 
   function onDataReady() {
     refreshCoreViews();

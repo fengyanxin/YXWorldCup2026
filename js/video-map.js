@@ -1,5 +1,67 @@
 /* 官方视频地址映射 — FIFA / FOX Sports YouTube */
 
+/** 2026 世界杯官方主题曲 MV — Shakira × Burna Boy（国内优先 B 站） */
+const ANTHEM_VIDEO = {
+  title: 'Dai Dai',
+  artists: 'Shakira × Burna Boy',
+  provider: 'bilibili',
+  bvid: 'BV1J2VW6KEt6',
+  aid: 116652687497738,
+  cid: 38679875570,
+  url: 'https://www.bilibili.com/video/BV1J2VW6KEt6/',
+  poster: 'https://i2.hdslb.com/bfs/archive/a13ae7989b78e8d2012d1068e823d16fa38ff6b6.jpg',
+  durationSec: 240,
+  youtube: {
+    id: 'fcnDmrtj6Sk',
+    url: 'https://www.youtube.com/watch?v=fcnDmrtj6Sk',
+  },
+};
+
+function buildAnthemEmbedSrc(anthem = ANTHEM_VIDEO) {
+  if (anthem.provider === 'bilibili' && anthem.bvid) {
+    const params = new URLSearchParams({
+      bvid: anthem.bvid,
+      page: '1',
+      autoplay: '1',
+      muted: '1',
+      danmaku: '0',
+      hideCoverInfo: '1',
+      hideDanmakuButton: '1',
+      noFullScreenButton: '1',
+      hasMuteButton: '0',
+      fjw: '0',
+      t: '0',
+    });
+    if (anthem.aid) params.set('aid', String(anthem.aid));
+    if (anthem.cid) params.set('cid', String(anthem.cid));
+    return `https://www.bilibili.com/blackboard/html5mobileplayer.html?${params.toString()}`;
+  }
+
+  const ytId = anthem.youtube?.id || anthem.id;
+  if (ytId) {
+    const params = new URLSearchParams({
+      autoplay: '1',
+      mute: '1',
+      controls: '0',
+      rel: '0',
+      loop: '1',
+      playlist: ytId,
+      playsinline: '1',
+      modestbranding: '1',
+      iv_load_policy: '3',
+      disablekb: '1',
+      fs: '0',
+    });
+    return `https://www.youtube-nocookie.com/embed/${ytId}?${params.toString()}`;
+  }
+
+  return anthem.url;
+}
+
+function getAnthemWatchUrl(anthem = ANTHEM_VIDEO) {
+  return anthem.url || anthem.youtube?.url || '#';
+}
+
 const FIFA_HIGHLIGHTS_HUB =
   'https://www.fifa.com/en/tournaments/mens/worldcup/canadamexicousa2026/highlights/all-matches';
 
