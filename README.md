@@ -72,8 +72,10 @@ python3 server.py
    | 项 | 值 |
    |----|-----|
    | Branch to deploy | `main`（或你的默认分支） |
-   | Build command | 留空 |
+   | Build command | `python3 scripts/fetch-snapshot.py`（已在 `netlify.toml` 中配置） |
    | Publish directory | `.` |
+
+   > 构建阶段会拉取最新 API 数据并写入 `js/sync-snapshot.js`，访客首次打开即可秒开，再在后台更新为实时数据。
 
 5. 点击 **Deploy site**，等待首次构建完成
 
@@ -147,11 +149,14 @@ Netlify 控制台 → **Site configuration** → **Domain management** → **Add
 
 ### 页面加载较慢
 
-上游 `worldcup26.ir` 响应偏慢（尤其 `/get/games`），首次打开需等待 API 返回。项目已通过以下方式缓解：
+首次打开会先展示**构建快照 / 本地缓存 / 静态数据**（几乎秒开），同时在后台请求 `/api/sync` 更新为最新比分。
 
-- 单次 `/api/sync` 合并请求
-- Edge / 本地服务端 20 秒缓存
-- 浏览器 `sessionStorage` 会话内快速展示
+上游 `worldcup26.ir` 本身响应偏慢（6–10 秒），已通过以下方式缓解：
+
+- 页面 `<head>` 内提前发起 `/api/sync` 请求
+- Netlify 构建时生成 `js/sync-snapshot.js` 数据快照
+- 单次 `/api/sync` 合并请求 + Edge 60 秒缓存
+- 浏览器 `sessionStorage` 30 分钟内复用
 
 ### 本地与线上差异
 

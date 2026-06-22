@@ -1,7 +1,7 @@
 const API_BASE = 'https://worldcup26.ir';
 const ALLOWED_PREFIXES = ['/get/games', '/get/groups', '/get/teams', '/get/stadiums', '/get/game/'];
 const SYNC_ENDPOINTS = ['/get/games', '/get/groups', '/get/teams'];
-const SYNC_CACHE_TTL_MS = 20_000;
+const SYNC_CACHE_TTL_MS = 60_000;
 
 let syncCache = { payload: null, ts: 0 };
 

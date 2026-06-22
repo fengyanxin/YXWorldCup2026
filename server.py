@@ -17,7 +17,7 @@ ROOT = os.path.dirname(os.path.abspath(__file__))
 API_BASE = 'https://worldcup26.ir'
 ALLOWED_API_PREFIXES = ('/get/games', '/get/groups', '/get/teams', '/get/stadiums', '/get/game/')
 SYNC_ENDPOINTS = ('/get/games', '/get/groups', '/get/teams')
-SYNC_CACHE_TTL = 20
+SYNC_CACHE_TTL = 60
 
 SYNC_CACHE = {'payload': None, 'ts': 0.0}
 SYNC_LOCK = threading.Lock()

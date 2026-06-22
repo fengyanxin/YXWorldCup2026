@@ -11,7 +11,7 @@ const MATCH_BY_PAIR = Object.fromEntries(
 const LiveData = {
   API_PREFIX: '/api',
   SESSION_KEY: 'wc2026-sync-v1',
-  SESSION_MAX_AGE_MS: 10 * 60 * 1000,
+  SESSION_MAX_AGE_MS: 30 * 60 * 1000,
   teamsById: {},
   zhFlagMap: {},
   lastSync: null,
@@ -23,11 +23,18 @@ const LiveData = {
     this.onUpdate = onUpdate;
     this.zhFlagMap = buildZhFlagMap();
 
-    const cached = this.loadSessionCache();
-    if (cached) {
-      this.applySyncPayload(cached);
-      this.lastSync = new Date(cached.syncedAt || Date.now());
-      this.onUpdate?.();
+    const snapshot = window.__SYNC_SNAPSHOT__;
+    if (snapshot?.games?.length) {
+      this.applySyncPayload(snapshot);
+      this.lastSync = new Date(snapshot.syncedAt || Date.now());
+      this.onUpdate?.('snapshot');
+    } else {
+      const cached = this.loadSessionCache();
+      if (cached) {
+        this.applySyncPayload(cached);
+        this.lastSync = new Date(cached.syncedAt || Date.now());
+        this.onUpdate?.('cache');
+      }
     }
 
     return this.refresh();
@@ -55,6 +62,12 @@ const LiveData = {
   },
 
   async fetchSync(force = false) {
+    if (!force && window.__syncPrefetch) {
+      const prefetched = await window.__syncPrefetch;
+      window.__syncPrefetch = null;
+      if (prefetched?.games) return prefetched;
+    }
+
     const query = force ? '?force=1' : '';
     const res = await fetch(`${this.API_PREFIX}/sync${query}`, { cache: 'no-store' });
     if (!res.ok) throw new Error(`API /sync → ${res.status}`);

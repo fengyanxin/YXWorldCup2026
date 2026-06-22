@@ -885,6 +885,10 @@ document.addEventListener('DOMContentLoaded', () => {
     refreshHighlightsDeferred();
   }
 
+  // 先用本地/快照数据立即渲染，API 返回后再静默更新
+  initHighlightsData();
+  refreshCoreViews();
+
   LiveData.init(onDataReady);
 
   document.addEventListener('keydown', (e) => {

@@ -1,4 +1,5 @@
 [build]
+  command = "python3 scripts/fetch-snapshot.py"
   publish = "."
 
 [[edge_functions]]
