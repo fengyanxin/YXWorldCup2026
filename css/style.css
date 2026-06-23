@@ -276,13 +276,16 @@ body.home-view .hero-match-card {
 }
 
 .hero-video-bg {
-  position: absolute;
+  display: none;
+  position: fixed;
   inset: 0;
-  grid-column: 1 / -1;
-  grid-row: 1 / -1;
   z-index: 0;
   pointer-events: none;
   overflow: hidden;
+}
+
+body.home-view .hero-video-bg {
+  display: block;
 }
 
 .hero-video-frame {
@@ -298,8 +301,8 @@ body.home-view .hero-match-card {
   left: 0;
   right: 0;
   bottom: 0;
-  height: 96px;
-  background: linear-gradient(0deg, rgba(10, 15, 26, 0.98) 0%, rgba(10, 15, 26, 0.82) 55%, transparent 100%);
+  height: 128px;
+  background: linear-gradient(0deg, rgba(10, 15, 26, 0.98) 0%, rgba(10, 15, 26, 0.88) 45%, transparent 100%);
   pointer-events: none;
   z-index: 2;
 }
@@ -368,7 +371,7 @@ body.home-view .hero-match-card {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .hero-video-bg { display: none; }
+  body.home-view .hero-video-bg { display: none; }
 }
 
 .hero-badge {
