@@ -17,7 +17,14 @@ const ANTHEM_VIDEO = {
   },
 };
 
+function prefersBiliOfficialPlayer() {
+  if (typeof navigator === 'undefined') return false;
+  const ua = navigator.userAgent;
+  return /Safari/i.test(ua) && !/Chrome|CriOS|Chromium|Edg|OPR|FxiOS|Firefox/i.test(ua);
+}
+
 function buildBiliPlayerSrc(video, options = {}) {
+  const useOfficial = options.player === 'official' || (options.player !== 'mobile' && prefersBiliOfficialPlayer());
   const params = new URLSearchParams({
     isOutside: 'true',
     bvid: video.bvid,
@@ -25,22 +32,33 @@ function buildBiliPlayerSrc(video, options = {}) {
     autoplay: options.autoplay ?? '1',
     muted: options.muted ?? '1',
     danmaku: '0',
-    hideCoverInfo: '1',
-    hideDanmakuButton: '1',
-    noFullScreenButton: '1',
-    hasMuteButton: '0',
-    fjw: '0',
     t: String(options.start ?? 0),
   });
-  if (options.loop) params.set('loop', '1');
   if (video.aid) params.set('aid', String(video.aid));
   if (video.cid) params.set('cid', String(video.cid));
+
+  if (useOfficial) {
+    return `https://player.bilibili.com/player.html?${params.toString()}`;
+  }
+
+  params.set('hideCoverInfo', '1');
+  params.set('hideDanmakuButton', '1');
+  params.set('noFullScreenButton', '1');
+  params.set('hasMuteButton', '0');
+  params.set('fjw', '0');
+  if (options.loop) params.set('loop', '1');
   return `https://www.bilibili.com/blackboard/html5mobileplayer.html?${params.toString()}`;
 }
 
-function buildAnthemEmbedSrc(anthem = ANTHEM_VIDEO) {
+function buildAnthemEmbedSrc(anthem = ANTHEM_VIDEO, options = {}) {
   if (anthem.provider === 'bilibili' && anthem.bvid) {
-    return buildBiliPlayerSrc(anthem, { autoplay: '1', muted: '1', start: 0, loop: true });
+    return buildBiliPlayerSrc(anthem, {
+      autoplay: '1',
+      muted: '1',
+      start: 0,
+      loop: true,
+      player: options.player,
+    });
   }
 
   const ytId = anthem.youtube?.id || anthem.id;
@@ -363,6 +381,7 @@ function renderLiveStreamHtml(source, match) {
         <iframe src="${src}" title="比赛集锦"
           scrolling="no"
           allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+          referrerpolicy="no-referrer"
           allowfullscreen loading="lazy"></iframe>
       </div>
       <p class="stream-hint">${source.hint || ''}</p>`;

@@ -8,9 +8,12 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
-  <link rel="preload" href="/api/sync" as="fetch" crossorigin>
   <script>
-    window.__syncPrefetch = fetch('/api/sync', { cache: 'no-store' })
+    window.__syncPrefetch = fetch('/api/sync', {
+      cache: 'no-store',
+      credentials: 'same-origin',
+      headers: { Accept: 'application/json' },
+    })
       .then(function (r) {
         if (!r.ok) throw new Error(String(r.status));
         return r.json();
@@ -209,6 +212,7 @@
   </footer>
 
   <script src="js/data.js"></script>
+  <script src="js/build-meta.js"></script>
   <script src="js/sync-snapshot.js"></script>
   <script src="js/timezone.js"></script>
   <script src="js/team-map.js"></script>

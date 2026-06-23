@@ -7,6 +7,34 @@
   path = "/api/*"
 
 [[headers]]
+  for = "/index.html"
+  [headers.values]
+    Cache-Control = "no-cache, must-revalidate"
+
+[[headers]]
+  for = "/js/build-meta.js"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"
+    Pragma = "no-cache"
+
+[[headers]]
+  for = "/js/sync-snapshot.js"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"
+    Pragma = "no-cache"
+
+[[headers]]
+  for = "/js/highlights-snapshot.js"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"
+    Pragma = "no-cache"
+
+[[headers]]
+  for = "/data/*"
+  [headers.values]
+    Cache-Control = "no-cache, must-revalidate"
+
+[[headers]]
   for = "/*"
   [headers.values]
     Cache-Control = "no-store"
@@ -14,9 +42,9 @@
 [[headers]]
   for = "/css/*"
   [headers.values]
-    Cache-Control = "max-age=86400"
+    Cache-Control = "public, max-age=86400, must-revalidate"
 
 [[headers]]
   for = "/js/*"
   [headers.values]
-    Cache-Control = "max-age=86400"
+    Cache-Control = "public, max-age=3600, must-revalidate"

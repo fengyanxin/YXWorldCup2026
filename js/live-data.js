@@ -10,7 +10,6 @@ const MATCH_BY_PAIR = Object.fromEntries(
 
 const LiveData = {
   API_PREFIX: '/api',
-  SESSION_KEY: 'wc2026-sync-v1',
   SESSION_MAX_AGE_MS: 30 * 60 * 1000,
   teamsById: {},
   zhFlagMap: {},
@@ -19,9 +18,15 @@ const LiveData = {
   syncing: false,
   onUpdate: null,
 
+  sessionKey() {
+    const buildId = window.__BUILD_ID__ || 'local';
+    return `wc2026-sync-${buildId}`;
+  },
+
   init(onUpdate) {
     this.onUpdate = onUpdate;
     this.zhFlagMap = buildZhFlagMap();
+    this.clearStaleSessionCaches();
 
     const snapshot = window.__SYNC_SNAPSHOT__;
     if (snapshot?.games?.length) {
@@ -40,9 +45,23 @@ const LiveData = {
     return this.refresh();
   },
 
+  clearStaleSessionCaches() {
+    const current = this.sessionKey();
+    try {
+      for (let i = sessionStorage.length - 1; i >= 0; i -= 1) {
+        const key = sessionStorage.key(i);
+        if (key && key.startsWith('wc2026-sync-') && key !== current) {
+          sessionStorage.removeItem(key);
+        }
+      }
+    } catch {
+      /* ignore */
+    }
+  },
+
   loadSessionCache() {
     try {
-      const raw = sessionStorage.getItem(this.SESSION_KEY);
+      const raw = sessionStorage.getItem(this.sessionKey());
       if (!raw) return null;
       const data = JSON.parse(raw);
       if (!data?.games || !data?.groups || !data?.teams) return null;
@@ -55,7 +74,7 @@ const LiveData = {
 
   saveSessionCache(payload) {
     try {
-      sessionStorage.setItem(this.SESSION_KEY, JSON.stringify(payload));
+      sessionStorage.setItem(this.sessionKey(), JSON.stringify(payload));
     } catch {
       /* ignore quota errors */
     }
@@ -69,7 +88,11 @@ const LiveData = {
     }
 
     const query = force ? '?force=1' : '';
-    const res = await fetch(`${this.API_PREFIX}/sync${query}`, { cache: 'no-store' });
+    const res = await fetch(`${this.API_PREFIX}/sync${query}`, {
+      cache: 'no-store',
+      credentials: 'same-origin',
+      headers: { Accept: 'application/json' },
+    });
     if (!res.ok) throw new Error(`API /sync → ${res.status}`);
     return res.json();
   },

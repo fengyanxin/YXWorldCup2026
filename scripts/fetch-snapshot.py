@@ -67,13 +67,21 @@ def main():
         'fromCache': False,
     }
 
+    build_id = payload['syncedAt']
+    build_meta = ROOT / 'js' / 'build-meta.js'
+    build_meta.write_text(
+        f"window.__BUILD_ID__='{build_id}';\n",
+        encoding='utf-8',
+    )
+
     OUT.write_text(
+        f"window.__BUILD_ID__='{build_id}';\n"
         'window.__SYNC_SNAPSHOT__ = '
         + json.dumps(payload, ensure_ascii=False, separators=(',', ':'))
         + ';\n',
         encoding='utf-8',
     )
-    print(f'fetch-snapshot: wrote {OUT} ({len(payload["games"])} games)')
+    print(f'fetch-snapshot: wrote {OUT} ({len(payload["games"])} games), build {build_id}')
 
 
 if __name__ == '__main__':

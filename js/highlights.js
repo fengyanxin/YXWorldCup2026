@@ -40,7 +40,11 @@ const Highlights = (() => {
     }
 
     try {
-      const res = await fetch('/api/highlights', { cache: 'no-store' });
+      const res = await fetch('/api/highlights', {
+        cache: 'no-store',
+        credentials: 'same-origin',
+        headers: { Accept: 'application/json' },
+      });
       if (res.ok) applyPayload(await res.json());
     } catch (_) {
       /* 离线或 Netlify 静态部署时使用 snapshot */
@@ -123,6 +127,7 @@ const Highlights = (() => {
           title="${h.title}"
           scrolling="no"
           allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+          referrerpolicy="no-referrer"
           allowfullscreen></iframe>`;
       return;
     }

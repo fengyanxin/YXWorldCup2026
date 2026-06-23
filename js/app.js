@@ -72,21 +72,20 @@ function mountHeroPlayer(options = {}) {
     heroVideoFallbackTimer = null;
   }
 
-  const forceYoutube = Boolean(options.forceYoutube || heroVideoUsesFallback);
-  const anthem = forceYoutube ? { ...ANTHEM_VIDEO, provider: 'youtube' } : ANTHEM_VIDEO;
-  if (forceYoutube) heroVideoUsesFallback = true;
+  const forceOfficial = Boolean(options.forceOfficial || heroVideoUsesFallback);
+  const src = buildAnthemEmbedSrc(ANTHEM_VIDEO, forceOfficial ? { player: 'official' } : undefined);
+  if (forceOfficial) heroVideoUsesFallback = true;
 
-  const src = buildAnthemEmbedSrc(anthem);
   frame.innerHTML = `
     <iframe
       src="${src}"
-      title="${anthem.title} — ${anthem.artists}"
+      title="${ANTHEM_VIDEO.title} — ${ANTHEM_VIDEO.artists}"
       scrolling="no"
       allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
-      referrerpolicy="no-referrer-when-downgrade"
+      referrerpolicy="no-referrer"
       tabindex="-1"></iframe>`;
 
-  if (forceYoutube || ANTHEM_VIDEO.provider !== 'bilibili') return;
+  if (forceOfficial || prefersBiliOfficialPlayer()) return;
 
   const iframe = frame.querySelector('iframe');
   if (!iframe) return;
@@ -94,7 +93,7 @@ function mountHeroPlayer(options = {}) {
   let settled = false;
   heroVideoFallbackTimer = window.setTimeout(() => {
     if (settled || heroVideoUsesFallback) return;
-    mountHeroPlayer({ forceYoutube: true });
+    mountHeroPlayer({ forceOfficial: true });
   }, 7000);
 
   iframe.addEventListener(
