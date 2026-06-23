@@ -117,18 +117,19 @@ const Highlights = (() => {
     const player = document.querySelector('#videoPlayer');
     if (!player) return;
 
-    if (h.playMode === 'embed' && h.platform === 'bilibili' && h.bvid && typeof buildBiliPlayerSrc === 'function') {
-      const src = buildBiliPlayerSrc(
-        { bvid: h.bvid, aid: h.aid, cid: h.cid },
-        { autoplay: '1', muted: '0' }
-      );
-      player.innerHTML = `
-        <iframe src="${src}"
-          title="${h.title}"
-          scrolling="no"
-          allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
-          referrerpolicy="no-referrer"
-          allowfullscreen></iframe>`;
+    if (h.playMode === 'embed' && h.platform === 'bilibili' && h.bvid && typeof mountBiliIframe === 'function') {
+      const embed = mountBiliIframe(player, {
+        video: { bvid: h.bvid, aid: h.aid, cid: h.cid },
+        title: h.title,
+        pageUrl: h.pageUrl || `https://www.bilibili.com/video/${h.bvid}/`,
+        autoplay: '1',
+        muted: '1',
+        poster: resolveCoverUrl(h),
+        showFallback: true,
+      });
+      if (embed?.player === 'mobile') {
+        window.setTimeout(() => embed.tryAlternate(), 9000);
+      }
       return;
     }
 

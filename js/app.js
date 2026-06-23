@@ -60,53 +60,37 @@ function initNav() {
 
 /* ===== Hero Video Background ===== */
 let heroVideoLoopTimer = null;
-let heroVideoUsesFallback = false;
+let heroVideoPlayerMode = 'mobile';
 let heroVideoFallbackTimer = null;
 
 function mountHeroPlayer(options = {}) {
   const frame = $('#heroVideoFrame');
-  if (!frame || typeof buildAnthemEmbedSrc !== 'function') return;
+  if (!frame || typeof mountBiliIframe !== 'function') return;
 
   if (heroVideoFallbackTimer) {
     window.clearTimeout(heroVideoFallbackTimer);
     heroVideoFallbackTimer = null;
   }
 
-  const forceOfficial = Boolean(options.forceOfficial || heroVideoUsesFallback);
-  const src = buildAnthemEmbedSrc(ANTHEM_VIDEO, forceOfficial ? { player: 'official' } : undefined);
-  if (forceOfficial) heroVideoUsesFallback = true;
+  const player = options.player || heroVideoPlayerMode || 'mobile';
+  heroVideoPlayerMode = player;
 
-  frame.innerHTML = `
-    <iframe
-      src="${src}"
-      title="${ANTHEM_VIDEO.title} — ${ANTHEM_VIDEO.artists}"
-      scrolling="no"
-      allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
-      referrerpolicy="no-referrer"
-      tabindex="-1"></iframe>`;
+  mountBiliIframe(frame, {
+    video: ANTHEM_VIDEO,
+    title: `${ANTHEM_VIDEO.title} — ${ANTHEM_VIDEO.artists}`,
+    pageUrl: getAnthemWatchUrl(ANTHEM_VIDEO),
+    autoplay: '1',
+    muted: '1',
+    loop: true,
+    player,
+    showFallback: false,
+  });
 
-  if (forceOfficial || prefersBiliOfficialPlayer()) return;
+  if (player !== 'mobile') return;
 
-  const iframe = frame.querySelector('iframe');
-  if (!iframe) return;
-
-  let settled = false;
   heroVideoFallbackTimer = window.setTimeout(() => {
-    if (settled || heroVideoUsesFallback) return;
-    mountHeroPlayer({ forceOfficial: true });
-  }, 7000);
-
-  iframe.addEventListener(
-    'load',
-    () => {
-      settled = true;
-      if (heroVideoFallbackTimer) {
-        window.clearTimeout(heroVideoFallbackTimer);
-        heroVideoFallbackTimer = null;
-      }
-    },
-    { once: true }
-  );
+    mountHeroPlayer({ player: 'official' });
+  }, 9000);
 }
 
 function clearHeroVideoLoop() {

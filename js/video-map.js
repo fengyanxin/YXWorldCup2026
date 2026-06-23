@@ -17,14 +17,27 @@ const ANTHEM_VIDEO = {
   },
 };
 
-function prefersBiliOfficialPlayer() {
-  if (typeof navigator === 'undefined') return false;
-  const ua = navigator.userAgent;
-  return /Safari/i.test(ua) && !/Chrome|CriOS|Chromium|Edg|OPR|FxiOS|Firefox/i.test(ua);
+function buildBiliMobilePlayerSrc(video, options = {}) {
+  const params = new URLSearchParams({
+    bvid: video.bvid,
+    page: '1',
+    autoplay: options.autoplay ?? '1',
+    muted: options.muted ?? '1',
+    danmaku: '0',
+    hideCoverInfo: '1',
+    hideDanmakuButton: '1',
+    noFullScreenButton: '1',
+    hasMuteButton: '0',
+    fjw: '0',
+    t: String(options.start ?? 0),
+  });
+  if (options.loop) params.set('loop', '1');
+  if (video.aid) params.set('aid', String(video.aid));
+  if (video.cid) params.set('cid', String(video.cid));
+  return `https://www.bilibili.com/blackboard/html5mobileplayer.html?${params.toString()}`;
 }
 
-function buildBiliPlayerSrc(video, options = {}) {
-  const useOfficial = options.player === 'official' || (options.player !== 'mobile' && prefersBiliOfficialPlayer());
+function buildBiliOfficialPlayerSrc(video, options = {}) {
   const params = new URLSearchParams({
     isOutside: 'true',
     bvid: video.bvid,
@@ -36,18 +49,96 @@ function buildBiliPlayerSrc(video, options = {}) {
   });
   if (video.aid) params.set('aid', String(video.aid));
   if (video.cid) params.set('cid', String(video.cid));
+  return `https://player.bilibili.com/player.html?${params.toString()}`;
+}
 
-  if (useOfficial) {
-    return `https://player.bilibili.com/player.html?${params.toString()}`;
+/** 默认 mobile 播放器（Netlify/Chrome 已验证）；Safari 下 official 反而易白屏 */
+function buildBiliPlayerSrc(video, options = {}) {
+  if (options.player === 'official') {
+    return buildBiliOfficialPlayerSrc(video, options);
   }
+  return buildBiliMobilePlayerSrc(video, options);
+}
 
-  params.set('hideCoverInfo', '1');
-  params.set('hideDanmakuButton', '1');
-  params.set('noFullScreenButton', '1');
-  params.set('hasMuteButton', '0');
-  params.set('fjw', '0');
-  if (options.loop) params.set('loop', '1');
-  return `https://www.bilibili.com/blackboard/html5mobileplayer.html?${params.toString()}`;
+const BILI_IFRAME_ALLOW = 'autoplay; encrypted-media; picture-in-picture; fullscreen; web-share';
+
+function mountBiliIframe(container, config = {}) {
+  if (!container || !config.video?.bvid) return null;
+
+  const {
+    video,
+    title = 'B站视频',
+    pageUrl = `https://www.bilibili.com/video/${video.bvid}/`,
+    autoplay = '1',
+    muted = '1',
+    loop = false,
+    player = 'mobile',
+    poster = '',
+    showFallback = true,
+    onReady,
+  } = config;
+
+  const src = buildBiliPlayerSrc(video, { autoplay, muted, loop, player });
+  const safePoster = (poster || '').replace(/"/g, '&quot;');
+
+  container.innerHTML = `
+    <div class="bili-embed-wrap">
+      <iframe
+        src="${src}"
+        title="${title}"
+        scrolling="no"
+        allow="${BILI_IFRAME_ALLOW}"
+        referrerpolicy="strict-origin-when-cross-origin"
+        allowfullscreen></iframe>
+      ${
+        showFallback
+          ? `<div class="bili-embed-fallback" hidden>
+        ${safePoster ? `<img src="${safePoster}" alt="" class="bili-embed-poster" referrerpolicy="no-referrer">` : ''}
+        <div class="bili-embed-fallback-body">
+          <p class="bili-embed-fallback-title">内嵌播放不可用</p>
+          <p class="bili-embed-fallback-sub">请点击下方按钮在 B 站观看（Safari 常见限制）</p>
+          <a class="btn btn-primary" href="${pageUrl}" target="_blank" rel="noopener">在 B 站打开观看</a>
+        </div>
+      </div>`
+          : ''
+      }
+    </div>`;
+
+  const iframe = container.querySelector('iframe');
+  const fallback = container.querySelector('.bili-embed-fallback');
+  let finished = false;
+
+  const revealFallback = () => {
+    if (finished || !showFallback) return;
+    finished = true;
+    if (fallback) fallback.hidden = false;
+    if (iframe) iframe.style.visibility = 'hidden';
+  };
+
+  const timer = showFallback
+    ? window.setTimeout(revealFallback, 9000)
+    : null;
+
+  iframe?.addEventListener(
+    'load',
+    () => {
+      if (timer) window.clearTimeout(timer);
+      onReady?.();
+    },
+    { once: true }
+  );
+
+  return {
+    player,
+    revealFallback,
+    tryAlternate() {
+      if (player === 'mobile') {
+        mountBiliIframe(container, { ...config, player: 'official', onReady });
+      } else {
+        revealFallback();
+      }
+    },
+  };
 }
 
 function buildAnthemEmbedSrc(anthem = ANTHEM_VIDEO, options = {}) {
@@ -372,19 +463,20 @@ function renderLiveStreamHtml(source, match) {
   }
 
   if (source.type === 'bilibili') {
+    const pageUrl = source.bvid ? `https://www.bilibili.com/video/${source.bvid}/` : '#';
     const src = buildBiliPlayerSrc(
       { bvid: source.bvid, aid: source.aid, cid: source.cid },
-      { autoplay: '1', muted: '0' }
+      { autoplay: '1', muted: '1' }
     );
     return `
-      <div class="stream-player">
+      <div class="stream-player" id="liveBiliPlayer">
         <iframe src="${src}" title="比赛集锦"
           scrolling="no"
-          allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
-          referrerpolicy="no-referrer"
-          allowfullscreen loading="lazy"></iframe>
+          allow="${BILI_IFRAME_ALLOW}"
+          referrerpolicy="strict-origin-when-cross-origin"
+          allowfullscreen></iframe>
       </div>
-      <p class="stream-hint">${source.hint || ''}</p>`;
+      <p class="stream-hint">${source.hint || ''} · 若无画面请 <a href="${pageUrl}" target="_blank" rel="noopener">在 B 站打开</a></p>`;
   }
 
   if (source.type === 'youtube') {
