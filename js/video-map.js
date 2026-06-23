@@ -19,27 +19,23 @@ const ANTHEM_VIDEO = {
 
 function buildBiliPlayerSrc(video, options = {}) {
   const params = new URLSearchParams({
+    isOutside: 'true',
     bvid: video.bvid,
-    page: '1',
+    p: '1',
     autoplay: options.autoplay ?? '1',
     muted: options.muted ?? '1',
     danmaku: '0',
-    hideCoverInfo: '1',
-    hideDanmakuButton: '1',
-    noFullScreenButton: '1',
-    hasMuteButton: '0',
-    fjw: '0',
+    high_quality: '1',
     t: String(options.start ?? 0),
-    loop: options.loop ? '1' : '0',
   });
   if (video.aid) params.set('aid', String(video.aid));
   if (video.cid) params.set('cid', String(video.cid));
-  return `https://www.bilibili.com/blackboard/html5mobileplayer.html?${params.toString()}`;
+  return `https://player.bilibili.com/player.html?${params.toString()}`;
 }
 
 function buildAnthemEmbedSrc(anthem = ANTHEM_VIDEO) {
   if (anthem.provider === 'bilibili' && anthem.bvid) {
-    return buildBiliPlayerSrc(anthem, { autoplay: '1', muted: '1', start: 0, loop: true });
+    return buildBiliPlayerSrc(anthem, { autoplay: '1', muted: '1', start: 0 });
   }
 
   const ytId = anthem.youtube?.id || anthem.id;

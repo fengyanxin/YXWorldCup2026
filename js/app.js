@@ -60,25 +60,64 @@ function initNav() {
 
 /* ===== Hero Video Background ===== */
 let heroVideoLoopTimer = null;
+let heroVideoUsesFallback = false;
+let heroVideoFallbackTimer = null;
 
-function mountHeroPlayer() {
+function mountHeroPlayer(options = {}) {
   const frame = $('#heroVideoFrame');
   if (!frame || typeof buildAnthemEmbedSrc !== 'function') return;
-  const src = buildAnthemEmbedSrc(ANTHEM_VIDEO);
+
+  if (heroVideoFallbackTimer) {
+    window.clearTimeout(heroVideoFallbackTimer);
+    heroVideoFallbackTimer = null;
+  }
+
+  const forceYoutube = Boolean(options.forceYoutube || heroVideoUsesFallback);
+  const anthem = forceYoutube ? { ...ANTHEM_VIDEO, provider: 'youtube' } : ANTHEM_VIDEO;
+  if (forceYoutube) heroVideoUsesFallback = true;
+
+  const src = buildAnthemEmbedSrc(anthem);
   frame.innerHTML = `
     <iframe
       src="${src}"
-      title="${ANTHEM_VIDEO.title} — ${ANTHEM_VIDEO.artists}"
+      title="${anthem.title} — ${anthem.artists}"
       scrolling="no"
       allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
       referrerpolicy="no-referrer-when-downgrade"
       tabindex="-1"></iframe>`;
+
+  if (forceYoutube || ANTHEM_VIDEO.provider !== 'bilibili') return;
+
+  const iframe = frame.querySelector('iframe');
+  if (!iframe) return;
+
+  let settled = false;
+  heroVideoFallbackTimer = window.setTimeout(() => {
+    if (settled || heroVideoUsesFallback) return;
+    mountHeroPlayer({ forceYoutube: true });
+  }, 7000);
+
+  iframe.addEventListener(
+    'load',
+    () => {
+      settled = true;
+      if (heroVideoFallbackTimer) {
+        window.clearTimeout(heroVideoFallbackTimer);
+        heroVideoFallbackTimer = null;
+      }
+    },
+    { once: true }
+  );
 }
 
 function clearHeroVideoLoop() {
   if (heroVideoLoopTimer) {
     window.clearTimeout(heroVideoLoopTimer);
     heroVideoLoopTimer = null;
+  }
+  if (heroVideoFallbackTimer) {
+    window.clearTimeout(heroVideoFallbackTimer);
+    heroVideoFallbackTimer = null;
   }
 }
 

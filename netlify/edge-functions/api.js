@@ -13,12 +13,19 @@ function normalizePayload(endpoint, raw) {
   return data;
 }
 
-async function fetchUpstream(endpoint) {
-  const res = await fetch(`${API_BASE}${endpoint}`, {
-    headers: { 'User-Agent': 'worldcup-2026/1.0', Accept: 'application/json' },
-  });
-  if (!res.ok) throw new Error(`${endpoint} → ${res.status}`);
-  return normalizePayload(endpoint, await res.text());
+async function fetchUpstream(endpoint, timeoutMs = 25000) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetch(`${API_BASE}${endpoint}`, {
+      signal: controller.signal,
+      headers: { 'User-Agent': 'worldcup-2026/1.0', Accept: 'application/json' },
+    });
+    if (!res.ok) throw new Error(`${endpoint} → ${res.status}`);
+    return normalizePayload(endpoint, await res.text());
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 async function buildSyncPayload(force = false) {
@@ -51,6 +58,18 @@ function jsonResponse(body, status = 200) {
 }
 
 export default async (request) => {
+  if (request.method === 'OPTIONS') {
+    return new Response(null, {
+      status: 204,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type',
+      },
+    });
+  }
+
+  try {
   const url = new URL(request.url);
   const endpoint = url.pathname.replace(/^\/api/, '') + url.search;
 
@@ -103,5 +122,8 @@ export default async (request) => {
     });
   } catch (err) {
     return jsonResponse({ error: String(err) }, 502);
+  }
+  } catch (err) {
+    return jsonResponse({ error: String(err) }, 500);
   }
 };

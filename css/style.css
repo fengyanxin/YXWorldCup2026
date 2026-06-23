@@ -276,8 +276,10 @@ body.home-view .hero-match-card {
 }
 
 .hero-video-bg {
-  position: fixed;
+  position: absolute;
   inset: 0;
+  grid-column: 1 / -1;
+  grid-row: 1 / -1;
   z-index: 0;
   pointer-events: none;
   overflow: hidden;
