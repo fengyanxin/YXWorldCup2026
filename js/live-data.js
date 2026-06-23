@@ -85,6 +85,7 @@ const LiveData = {
     const groups = Array.isArray(payload.groups) ? payload.groups : payload.groups?.groups || [];
     this.applyGames(games);
     this.applyStandings(groups);
+    this.applyScorers(games);
     this.applyLiveMatch();
   },
 
@@ -217,6 +218,11 @@ const LiveData = {
 
       WC2026.standings[key] = rows;
     });
+  },
+
+  applyScorers(games) {
+    const rows = buildScorersFromGames(games, this.teamsById, this.zhFlagMap);
+    if (rows.length) WC2026.scorers = rows;
   },
 
   applyLiveMatch() {
