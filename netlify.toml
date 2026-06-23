@@ -1,5 +1,5 @@
 [build]
-  command = "python3 scripts/fetch-snapshot.py && python3 scripts/fetch-highlights.py"
+  command = "python3 scripts/fetch-snapshot.py && python3 scripts/fetch-highlights.py && python3 scripts/fetch-anthem-video.py"
   publish = "."
 
 [[edge_functions]]
@@ -12,7 +12,18 @@
     Cache-Control = "no-cache, must-revalidate"
 
 [[headers]]
+  for = "/assets/video/*"
+  [headers.values]
+    Cache-Control = "public, max-age=604800, immutable"
+
+[[headers]]
   for = "/js/build-meta.js"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"
+    Pragma = "no-cache"
+
+[[headers]]
+  for = "/js/anthem-video-meta.js"
   [headers.values]
     Cache-Control = "no-cache, no-store, must-revalidate"
     Pragma = "no-cache"

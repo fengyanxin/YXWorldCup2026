@@ -63,14 +63,53 @@ let heroVideoLoopTimer = null;
 let heroVideoPlayerMode = 'mobile';
 let heroVideoFallbackTimer = null;
 
+function getAnthemLocalVideo() {
+  const meta = window.__ANTHEM_LOCAL_VIDEO__;
+  return meta?.available && meta?.src ? meta : null;
+}
+
+function mountHeroLocalVideo() {
+  const frame = $('#heroVideoFrame');
+  const local = getAnthemLocalVideo();
+  if (!frame || !local) return false;
+
+  const poster = ANTHEM_VIDEO.poster || '';
+  frame.innerHTML = `
+    <video
+      class="hero-video-el"
+      src="${local.src}"
+      ${poster ? `poster="${poster}"` : ''}
+      autoplay
+      muted
+      loop
+      playsinline
+      webkit-playsinline
+      disablePictureInPicture
+      preload="auto"></video>`;
+
+  const video = frame.querySelector('video');
+  if (!video) return false;
+
+  const play = () => {
+    video.play().catch(() => {});
+  };
+  video.addEventListener('canplay', play, { once: true });
+  play();
+  return true;
+}
+
 function mountHeroPlayer(options = {}) {
   const frame = $('#heroVideoFrame');
-  if (!frame || typeof mountBiliIframe !== 'function') return;
+  if (!frame) return;
 
   if (heroVideoFallbackTimer) {
     window.clearTimeout(heroVideoFallbackTimer);
     heroVideoFallbackTimer = null;
   }
+
+  if (!options.forceIframe && mountHeroLocalVideo()) return;
+
+  if (typeof mountBiliIframe !== 'function') return;
 
   const player = options.player || heroVideoPlayerMode || 'mobile';
   heroVideoPlayerMode = player;
@@ -89,7 +128,7 @@ function mountHeroPlayer(options = {}) {
   if (player !== 'mobile') return;
 
   heroVideoFallbackTimer = window.setTimeout(() => {
-    mountHeroPlayer({ player: 'official' });
+    mountHeroPlayer({ player: 'official', forceIframe: true });
   }, 9000);
 }
 
@@ -106,9 +145,10 @@ function clearHeroVideoLoop() {
 
 function scheduleHeroVideoLoop() {
   clearHeroVideoLoop();
+  if (getAnthemLocalVideo()) return;
   if (!ANTHEM_VIDEO.durationSec) return;
   heroVideoLoopTimer = window.setTimeout(() => {
-    mountHeroPlayer();
+    mountHeroPlayer({ forceIframe: true });
     scheduleHeroVideoLoop();
   }, ANTHEM_VIDEO.durationSec * 1000 + 600);
 }
