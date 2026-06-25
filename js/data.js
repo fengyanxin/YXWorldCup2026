@@ -230,7 +230,12 @@ const WC2026 = {
     { name: 'CBC', region: '加拿大', url: 'https://www.cbc.ca/sports/soccer', logo: '📡' },
     { name: 'Televisa', region: '墨西哥', url: 'https://www.televisa.com', logo: '📻' },
     { name: '央视体育', region: '中国', url: 'https://sports.cctv.com', logo: '🇨🇳' },
-    { name: '咪咕视频', region: '中国', url: 'https://www.miguvideo.com', logo: '📱' },
+    {
+      name: '咪咕视频',
+      region: '中国',
+      url: 'https://m.miguvideo.com/mgs/promotion/subject/worldCup2026/prd/index.html?pageId=8b9060bb70f245eb85389c5718b7e593&iswww=1',
+      logo: '📱',
+    },
   ],
 
   liveMatch: {

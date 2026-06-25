@@ -380,11 +380,15 @@ function resolveHighlightVideo(matchId, clipKey, category, seed) {
   };
 }
 
+/** 咪咕 sportLive 须带 mgdbId；无参数会报错，专区入口见官方 worldCup2026 专题 */
+const MIGU_WORLDCUP_URL =
+  'https://m.miguvideo.com/mgs/promotion/subject/worldCup2026/prd/index.html?pageId=8b9060bb70f245eb85389c5718b7e593&iswww=1';
+
 const CN_LIVE_LINKS = [
   {
     name: '咪咕视频',
-    region: '中国移动',
-    url: 'https://www.miguvideo.com/mgs/website/prd/sportLive.html',
+    region: '2026 世界杯专区',
+    url: MIGU_WORLDCUP_URL,
     logo: '📱',
     primary: true,
   },
