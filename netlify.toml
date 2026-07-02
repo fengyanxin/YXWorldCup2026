@@ -1,5 +1,5 @@
 [build]
-  command = "python3 scripts/fetch-snapshot.py && python3 scripts/fetch-highlights.py && python3 scripts/fetch-anthem-video.py"
+  command = "python3 scripts/fetch-snapshot.py && python3 scripts/fetch-player-zh.py && python3 scripts/fetch-highlights.py && python3 scripts/fetch-anthem-video.py"
   publish = "."
 
 [[edge_functions]]
@@ -30,6 +30,12 @@
 
 [[headers]]
   for = "/js/sync-snapshot.js"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"
+    Pragma = "no-cache"
+
+[[headers]]
+  for = "/js/player-zh-snapshot.js"
   [headers.values]
     Cache-Control = "no-cache, no-store, must-revalidate"
     Pragma = "no-cache"

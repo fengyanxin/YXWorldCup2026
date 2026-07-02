@@ -1,5 +1,58 @@
 /* 从比赛进球数据聚合射手榜，并提供球员中文名映射 */
 
+function getPlayerZhSnapshot() {
+  return window.__PLAYER_ZH_MAP__?.players || null;
+}
+
+const CORRUPTED_NAME_REPAIR = {
+  'Nikvlas Ph Ph': 'Nicolas Pépé',
+  'Paph Gviih': 'Pape Gueye',
+  'Jvd Blingham': 'Jude Bellingham',
+  'Jvlian Kviinvnz': 'Julián Quiñones',
+  'Hri Kin': 'Harry Kane',
+  'Kan Aihan': 'Kaan Ayhan',
+  'Fistvn Mail': 'Fiston Mayele',
+  'Gvnzalv Plata': 'Gonzalo Plata',
+  'Nilsvn Angvlv': 'Nilson Angulo',
+  'Nvnv Mndz': 'Nuno Mendes',
+  'Prvmis Divid': 'Dan Ndoye',
+  'Hazm Mstvri': 'Hannibal Mejbri',
+  'Drik Lvkasn': 'Mohammed Kudus',
+  'Ian Fn Hkh': 'Donyell Malen',
+  'Khvliv Ansisv': 'Julio Enciso',
+  'Abdalvhid Namtvf': 'Abdulvohid Nematov',
+  'Aldvr Shvmvrvdvf': 'Alisher Shomuradov',
+  'Abvnad': 'Edin Dzeko',
+  'Karim Alaibgvvich': 'Ermedin Demirovic',
+  'Armin Mhmich': 'Armin Dedic',
+  'Astfan Avstakviv': 'Stephen Eustáquio',
+  'Taplv Maskv': 'Thapelo Maseko',
+  'Ailman Andiaih': 'Iliman Ndiaye',
+  'Mvsi Altmari': 'Musa Al-Taamari',
+  'Jivani Lv Slsv': 'Jovan Ilic',
+  'Svfian Rhimi': 'Sofiane Rahimi',
+  'Dniz Avndav': 'Deniz Undav',
+  'Aiash Ivida': 'Ayase Ueda',
+  'Kvdi Khakpv': 'Cody Gakpo',
+  'Asmaail Saibari': 'Ismaïla Saibari',
+  'Dnil Mvnvz': 'Daniel Muñoz',
+  'Fin Svrman': 'Finn Surman',
+  'Hliv Varla': 'Helio Varela',
+  'Izn Alarb': 'Yazan Al-Arab',
+  'Jvhan Mnzambi': 'João Manzambi',
+  'Kalb Iirnki': 'Caleb Yirenkyi',
+  'Khamintvn Kampaz': 'Haminton Campaz',
+  'Markvs Hlmgrn Pdrsn': 'Markus Holmgren Pedersen',
+  'Mohamed Almnai': 'Mohamed Manai',
+  'Rvbn Vargas': 'Ruben Vargas',
+  'Rvmanv Ashmid': 'Romano Schmid',
+  'Abas Bk Fiz Allh Af': 'Abubakkar Fayzullaev',
+  'Ali Avlvan': 'Ali Olwan',
+  'Hassan Mohamed Altmbkti': 'Hassan Altambakti',
+  'Lviiz Diaz': 'Luis Díaz',
+  'Kamrvn Bargs': 'Cameron Burgess',
+};
+
 const PLAYER_EN_TO_ZH = {
   'Lionel Messi': '梅西',
   'L. Messi': '梅西',
@@ -113,6 +166,92 @@ const PLAYER_EN_TO_ZH = {
   'Ousmane Dembélé': '奥斯曼·登贝莱',
   'Rvbn Vargas': '鲁文·瓦尔加斯',
   'Rvmanv Ashmid': '罗曼诺·施密德',
+  'Cristiano Ronaldo': 'C罗',
+  'Leandro Trossard': '特罗萨德',
+  'Riyad Mahrez': '马赫雷斯',
+  'Nicolas Pépé': '尼古拉·佩佩',
+  'Pape Gueye': '帕普·盖伊',
+  'Wilson Isidor': '威尔逊·伊西多尔',
+  'Petar Sučić': '佩塔尔·苏契奇',
+  'Nikola Vlašić': '尼古拉·弗拉希奇',
+  'Désiré Doué': '德西雷·杜埃',
+  'Achraf Hakimi': '阿什拉夫·哈基米',
+  'Alexis Saelemaekers': '亚历克西斯·萨勒梅克斯',
+  'Amine Gouiri': '阿明·古伊里',
+  'Ante Budimir': '安特·布迪米尔',
+  'Arda Güler': '阿尔达·居勒尔',
+  'Casemiro': '卡塞米罗',
+  'Daizen Maeda': '前田大然',
+  'Gabriel Martinelli': '加布里埃尔·马丁内利',
+  'Kevin De Bruyne': '凯文·德布劳内',
+  'Lautaro Martínez': '劳塔罗·马丁内斯',
+  'Leroy Sané': '勒罗伊·萨内',
+  'Marcel Sabitzer': '马塞尔·萨比策',
+  'Marko Arnautović': '马克·阿瑙托维奇',
+  'Rafael Leão': '拉斐尔·莱奥',
+  'Romelu Lukaku': '罗梅卢·卢卡库',
+  'Yassine Bounou': '亚辛·布努',
+  'Kaishū Sano': '佐野海舟',
+  'Habib Diarra': '哈比卜·迪亚拉',
+  'Hassan Al-Haydos': '哈桑·海多斯',
+  'Issa Diop': '伊萨·迪奥',
+  'Sebastian Berhalter': '塞巴斯蒂安·柏哈尔特',
+  'Auston Trusty': '奥斯汀·特拉斯蒂',
+  'Álex Baena': '阿莱士·巴埃纳',
+  'Álvaro Fidalgo': '阿尔瓦罗·费达尔戈',
+  'Alis Skhiri': '埃利斯·斯希里',
+  'Al Rashdan': '拉什丹',
+  'Baris Alpr Ailmaz': '巴里斯·伊尔马兹',
+  'Gessime Yassine': '盖西姆·亚辛',
+  'Mahmoud Saber': '马哈茂德·萨贝尔',
+  'Mateo Chávez': '马特奥·查韦斯',
+  'Saša Kalajdžić': '萨沙·卡拉季奇',
+  'Thelo Aasgaard': '西奥·阿斯加德',
+  'Dan Ndoye': '丹·恩多耶',
+  'Hannibal Mejbri': '汉尼拔·梅布里',
+  'Mohammed Kudus': '穆罕默德·库杜斯',
+  'Donyell Malen': '多尼尔·马伦',
+  'Julio Enciso': '胡利奥·恩西索',
+  'Abdulvohid Nematov': '阿卜杜勒沃希德·内马托夫',
+  'Alisher Shomuradov': '阿利舍尔·绍穆拉多夫',
+  'Edin Dzeko': '埃丁·哲科',
+  'Ermedin Demirovic': '埃尔梅丁·德米罗维奇',
+  'Stephen Eustáquio': '斯蒂芬·欧斯塔基奥',
+  'Thapelo Maseko': '塔佩洛·马塞科',
+  'Iliman Ndiaye': '伊利曼·恩迪亚耶',
+  'Musa Al-Taamari': '穆萨·塔阿马里',
+  'Jovan Ilic': '约万·伊利奇',
+  'Sofiane Rahimi': '索菲扬·拉希米',
+  'Fiston Mayele': '菲斯顿·马耶勒',
+  'Kaan Ayhan': '卡安·艾汗',
+  'Nuno Mendes': '努诺·门德斯',
+  'Gonzalo Plata': '贡萨洛·普拉塔',
+  'Nilson Angulo': '尼尔森·安古洛',
+  'Abubakkar Fayzullaev': '法伊祖拉耶夫',
+  'Daniel Muñoz': '丹尼尔·穆尼奥斯',
+  'Finn Surman': '芬恩·瑟曼',
+  'Helio Varela': '赫利奥·瓦雷拉',
+  'Yazan Al-Arab': '亚赞·阿拉布',
+  'João Manzambi': '若昂·曼赞比',
+  'Caleb Yirenkyi': '凯勒布·伊伦基',
+  'Haminton Campaz': '哈明顿·坎帕斯',
+  'Markus Holmgren Pedersen': '马库斯·霍姆格伦·佩德森',
+  'Mohamed Manai': '穆罕默德·马奈',
+  'Ruben Vargas': '鲁文·瓦尔加斯',
+  'Romano Schmid': '罗曼诺·施密德',
+  'Ali Olwan': '阿里·奥尔万',
+  'Hassan Altambakti': '哈桑·坦巴克提',
+  'Armin Dedic': '阿明·迪迪奇',
+  'Bradley Barcola': '巴尔科拉',
+  'João Neves': '若昂·内维斯',
+  'Alexander Isak': '伊萨克',
+  'Viktor Gyökeres': '哲凯赖什',
+  'Marcus Rashford': '马库斯·拉什福德',
+  'Yoane Wissa': '扬·维萨',
+  'Cameron Burgess': '卡梅伦·博吉斯',
+  'Ayase Ueda': '上田绮世',
+  'Cody Gakpo': '加克波',
+  'Deniz Undav': '翁达夫',
 };
 
 const LASTNAME_TO_ZH = {
@@ -212,6 +351,79 @@ const LASTNAME_TO_ZH = {
   Fayzullaev: '法伊祖拉耶夫',
   Ivida: '上田绮世',
   Khakpv: '加克波',
+  Trossard: '特罗萨德',
+  Mahrez: '马赫雷斯',
+  Pépé: '佩佩',
+  Gueye: '盖伊',
+  Isidor: '伊西多尔',
+  Sučić: '苏契奇',
+  Vlašić: '弗拉希奇',
+  Doué: '杜埃',
+  Hakimi: '哈基米',
+  Saelemaekers: '萨勒梅克斯',
+  Gouiri: '古伊里',
+  Budimir: '布迪米尔',
+  Güler: '居勒尔',
+  Casemiro: '卡塞米罗',
+  Maeda: '前田大然',
+  Martinelli: '马丁内利',
+  Bruyne: '德布劳内',
+  Sané: '萨内',
+  Sabitzer: '萨比策',
+  Arnautović: '阿瑙托维奇',
+  Lukaku: '卢卡库',
+  Bounou: '布努',
+  Sano: '佐野海舟',
+  Diarra: '迪亚拉',
+  'Al-Haydos': '海多斯',
+  Diop: '迪奥',
+  Berhalter: '柏哈尔特',
+  Trusty: '特拉斯蒂',
+  Baena: '巴埃纳',
+  Fidalgo: '费达尔戈',
+  Skhiri: '斯希里',
+  Rashdan: '拉什丹',
+  Ailmaz: '伊尔马兹',
+  Saber: '萨贝尔',
+  Chávez: '查韦斯',
+  Kalajdžić: '卡拉季奇',
+  Aasgaard: '阿斯加德',
+  Ndoye: '恩多耶',
+  Mejbri: '梅布里',
+  Kudus: '库杜斯',
+  Malen: '马伦',
+  Enciso: '恩西索',
+  Nematov: '内马托夫',
+  Shomuradov: '绍穆拉多夫',
+  Dzeko: '哲科',
+  Demirovic: '德米罗维奇',
+  Eustáquio: '欧斯塔基奥',
+  Maseko: '马塞科',
+  Ndiaye: '恩迪亚耶',
+  'Al-Taamari': '塔阿马里',
+  Ilic: '伊利奇',
+  Rahimi: '拉希米',
+  Mayele: '马耶勒',
+  Ayhan: '艾汗',
+  Mendes: '门德斯',
+  Plata: '普拉塔',
+  Angulo: '安古洛',
+  Manai: '马奈',
+  Vargas: '瓦尔加斯',
+  Olwan: '奥尔万',
+  Altambakti: '坦巴克提',
+  Dedic: '迪迪奇',
+  Barcola: '巴尔科拉',
+  Neves: '内维斯',
+  Wissa: '维萨',
+  Burgess: '博吉斯',
+  Ueda: '上田绮世',
+  Surman: '瑟曼',
+  Varela: '瓦雷拉',
+  Manzambi: '曼赞比',
+  Yirenkyi: '伊伦基',
+  Campaz: '坎帕斯',
+  Pedersen: '佩德森',
 };
 
 function normalizeQuotes(raw) {
@@ -332,22 +544,160 @@ const LATIN_WORD_TO_ZH = {
   jude: '裘德',
   raul: '劳尔',
   vinicius: '维尼修斯',
+  casemiro: '卡塞米罗',
+  cristiano: '克里斯蒂亚诺',
+  leandro: '莱andro',
+  riyad: '里亚德',
+  achraf: '阿什拉夫',
+  alexis: '亚历克西斯',
+  amine: '阿明',
+  ante: '安特',
+  arda: '阿尔达',
+  daizen: '大然',
+  gabriel: '加布里埃尔',
+  lautaro: '劳塔罗',
+  leroy: '勒罗伊',
+  marcel: '马塞尔',
+  marko: '马克',
+  nikola: '尼古拉',
+  petar: '佩塔尔',
+  rafael: '拉斐尔',
+  romelu: '罗梅卢',
+  wilson: '威尔逊',
+  yassine: '亚辛',
+  habib: '哈比卜',
+  issa: '伊萨',
+  sebastian: '塞巴斯蒂安',
+  auston: '奥斯汀',
+  mateo: '马特奥',
+  thelo: '西奥',
+  dan: '丹',
+  hannibal: '汉尼拔',
+  donyell: '多尼尔',
+  julio: '胡利奥',
+  edin: '埃丁',
+  ermedin: '埃尔梅丁',
+  stephen: '斯蒂芬',
+  thapelo: '塔佩洛',
+  iliman: '伊利曼',
+  jovan: '约万',
+  sofiane: '索法iane',
+  fiston: '菲斯顿',
+  kaan: '卡安',
+  nuno: '努诺',
+  gonzalo: '贡萨洛',
+  nilson: '尼尔森',
+  nicolas: '尼古拉',
+  pape: '帕普',
+  finn: '芬恩',
+  ruben: '鲁文',
+  romano: '罗曼诺',
+  ousmane: '奥斯曼',
+  breel: '布雷尔',
+  brian: '布莱恩',
+  felix: '费利克斯',
+  nathan: '内森',
+  anthony: '安东尼',
+  franck: '弗兰克',
+  helio: '赫利奥',
+  jovo: '约沃',
+  ramin: '拉明',
+  yoane: '扬',
+  cody: '科迪',
+  deniz: '德尼兹',
+  ayase: 'Ayase',
+  abubakkar: '阿布巴卡尔',
+  alisher: '阿利舍尔',
+  abdulvohid: '阿卜杜勒沃希德',
+  musa: '穆萨',
+  baris: '巴里斯',
+  gessime: '盖西姆',
+  saša: '萨沙',
+  kaishu: '海舟',
+  kaishū: '海舟',
 };
 
-function playerNameZh(name) {
+const LATIN_CHAR_ZH = {
+  a: '阿', b: '布', c: '克', d: '德', e: '埃', f: '夫', g: '格', h: '赫', i: '伊',
+  j: '杰', k: '克', l: '尔', m: '姆', n: '恩', o: '奥', p: '普', q: '克', r: '尔',
+  s: '斯', t: '特', u: '乌', v: '维', w: '韦', x: '克斯', y: '伊', z: '兹',
+};
+
+const LATIN_SYLLABLE_ZH = {
+  sch: '施', str: '斯特', chr: '克尔', sh: '什', ch: '奇', th: '思', ph: '夫', ck: '克',
+  ng: '恩', ou: '乌', ai: '艾', ei: '埃', ia: '亚', io: '奥', ea: '亚', ee: '伊', oo: '乌',
+  an: '安', en: '恩', in: '因', on: '昂', er: '尔', ar: '阿尔', or: '奥尔', el: '埃尔',
+  al: '阿尔', ez: '斯', es: '斯', son: '森', ton: '顿', man: '曼', lan: '兰', mar: '马尔',
+  car: '卡尔', bar: '巴尔', sar: '萨尔', van: '范', del: '德尔', ron: '龙',
+};
+
+function repairPlayerName(name) {
   const normalized = normalizePlayerName(name);
-  if (PLAYER_EN_TO_ZH[normalized]) return PLAYER_EN_TO_ZH[normalized];
+  return CORRUPTED_NAME_REPAIR[normalized] || CORRUPTED_NAME_REPAIR[name] || normalized;
+}
+
+function hasLatinText(value) {
+  if (!value) return false;
+  if (/[\u4e00-\u9fff]/.test(value)) {
+    return /[A-Za-zÀ-ÿ]{2,}/.test(value);
+  }
+  return /[A-Za-zÀ-ÿ]/.test(value);
+}
+
+function phoneticLatinToZh(name) {
+  const parts = normalizePlayerName(name).split(/\s+/).filter(Boolean);
+  return parts
+    .map((part) => {
+      const lower = stripAccents(part).toLowerCase();
+      let i = 0;
+      const buf = [];
+      while (i < lower.length) {
+        let matched = false;
+        for (const size of [4, 3, 2, 1]) {
+          const chunk = lower.slice(i, i + size);
+          const zh = LATIN_SYLLABLE_ZH[chunk] || LATIN_WORD_TO_ZH[chunk];
+          if (zh) {
+            buf.push(zh);
+            i += size;
+            matched = true;
+            break;
+          }
+        }
+        if (!matched) {
+          buf.push(LATIN_CHAR_ZH[lower[i]] || '');
+          i += 1;
+        }
+      }
+      return buf.join('') || part;
+    })
+    .join('·');
+}
+
+function playerNameZh(name) {
+  const snapshot = getPlayerZhSnapshot();
+  const raw = normalizePlayerName(name);
+  if (snapshot?.[raw]) return snapshot[raw];
+  if (snapshot?.[name]) return snapshot[name];
+
+  const canonical = repairPlayerName(raw);
+  if (snapshot?.[canonical]) return snapshot[canonical];
+
+  if (PLAYER_EN_TO_ZH[canonical]) return PLAYER_EN_TO_ZH[canonical];
+  if (PLAYER_EN_TO_ZH[raw]) return PLAYER_EN_TO_ZH[raw];
   if (PLAYER_EN_TO_ZH[name]) return PLAYER_EN_TO_ZH[name];
 
-  const lastnameZh = lookupLastnameZh(normalized);
+  const lastnameZh = lookupLastnameZh(canonical);
   if (lastnameZh) {
-    const parts = normalized.split(/\s+/);
+    const parts = canonical.split(/\s+/);
     if (parts.length === 1 || /^[A-Z]\.?/.test(parts[0])) return lastnameZh;
   }
 
-  const zh = transliterateLatinName(normalized);
-  if (!/[A-Za-z]/.test(zh)) return zh;
-  return lastnameZh || zh;
+  const zh = transliterateLatinName(canonical);
+  if (!hasLatinText(zh)) return zh;
+  if (lastnameZh) return lastnameZh;
+
+  const phonetic = phoneticLatinToZh(canonical);
+  return hasLatinText(phonetic) ? phoneticLatinToZh(repairPlayerName(raw)) : phonetic;
 }
 
 function buildScorersFromGames(games, teamsById, zhFlagMap) {
