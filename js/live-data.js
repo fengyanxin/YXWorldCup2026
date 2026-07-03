@@ -4,6 +4,12 @@ function matchPairKey(home, away) {
   return [home, away].sort().join(' vs ');
 }
 
+function parseOptionalScore(value) {
+  if (value === null || value === undefined || value === '' || value === 'null') return null;
+  const n = Number(value);
+  return Number.isFinite(n) ? n : null;
+}
+
 const MATCH_BY_PAIR = Object.fromEntries(
   WC2026.matches.map((m) => [matchPairKey(m.home, m.away), m])
 );
@@ -291,6 +297,10 @@ const LiveData = {
       match.status = status;
       match.minute = this.mapMinute(g);
       match.score = finished || status === 'live' ? [homeScore, awayScore] : null;
+      const homePen = parseOptionalScore(g.home_penalty_score);
+      const awayPen = parseOptionalScore(g.away_penalty_score);
+      match.penalties =
+        homePen !== null && awayPen !== null && finished ? [homePen, awayPen] : null;
       this.applyScheduleFromApi(match, g);
     });
   },

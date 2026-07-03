@@ -40,6 +40,10 @@ function initNav() {
       refreshStandingsData({ force: true });
     }
 
+    if (id === 'knockout' && knockoutView === 'bracket') {
+      requestAnimationFrame(() => applyBracketViewportScale());
+    }
+
     $('#mainNav')?.classList.remove('open');
     window.scrollTo({ top: 0, behavior: id === 'home' ? 'auto' : 'smooth' });
   }
@@ -487,13 +491,14 @@ function renderSchedule() {
 function renderScheduleMatchRow(m) {
   const stage = m.stage || GROUP_LABELS[m.group] || m.group;
   const minute = m.minute ? ` ${m.minute}'` : '';
-  const homeWin = m.score && m.score[0] > m.score[1];
-  const awayWin = m.score && m.score[1] > m.score[0];
-  const isDraw = m.score && m.score[0] === m.score[1];
+  const { homeWin, awayWin, isDraw } = getMatchOutcome(m);
   const hasScore = m.score !== null && m.score !== undefined;
 
   const scoreHtml = hasScore
-    ? `<span class="schedule-row-score">${m.score[0]}<span class="score-sep">:</span>${m.score[1]}</span>`
+    ? `<div class="match-score-wrap">
+        <span class="schedule-row-score">${m.score[0]}<span class="score-sep">:</span>${m.score[1]}</span>
+        ${formatMatchPenaltyHtml(m)}
+      </div>`
     : `<span class="schedule-row-score vs">VS</span>`;
 
   return `
@@ -568,6 +573,592 @@ function initScheduleFilters() {
 function formatDateShort(dateStr) {
   const d = new Date(dateStr + 'T00:00:00');
   return `${d.getMonth() + 1}/${d.getDate()}`;
+}
+
+/* ===== Knockout ===== */
+const KO_ROUND_ORDER = ['16强', '8强', '四分之一决赛', '半决赛', '三四名决赛', '决赛'];
+
+const KO_ROUND_LABELS = {
+  '16强': '32强 · 1/16 决赛',
+  '8强': '16强 · 1/8 决赛',
+  四分之一决赛: '8强 · 1/4 决赛',
+  半决赛: '半决赛',
+  三四名决赛: '三四名决赛',
+  决赛: '决赛',
+};
+
+const knockoutFilter = { round: 'all', status: 'all' };
+let knockoutView = 'bracket';
+
+/** 2026 淘汰赛对阵拓扑（与 scripts/gen-bracket.py 一致） */
+const KO_BRACKET_TREE = {
+  left: {
+    pairs: [
+      [73, 75, 90],
+      [74, 77, 89],
+      [76, 78, 91],
+      [79, 80, 92],
+    ],
+    qf: [
+      [90, 89, 97],
+      [91, 92, 98],
+    ],
+    sf: [97, 98, 101],
+  },
+  right: {
+    pairs: [
+      [81, 82, 94],
+      [83, 84, 93],
+      [86, 88, 95],
+      [85, 87, 96],
+    ],
+    qf: [
+      [94, 93, 99],
+      [95, 96, 100],
+    ],
+    sf: [99, 100, 102],
+  },
+  final: [101, 102, 104],
+  third: 103,
+};
+
+const BRACKET_NODE_H = 84;
+const BRACKET_NODE_GAP = 14;
+const BRACKET_PAIR_H = BRACKET_NODE_H * 2 + BRACKET_NODE_GAP;
+const BRACKET_TOTAL_H = BRACKET_PAIR_H * 4;
+const BRACKET_COL_W = 124;
+const BRACKET_COL_GAP = 14;
+const BRACKET_CENTER_COL_W = 136;
+const BRACKET_CENTER_COL = 4;
+const BRACKET_LABEL_H = 24;
+const BRACKET_FINAL_GAP = 44;
+const BRACKET_DEFAULT_SCALE = 0.93;
+
+let bracketUserZoom = 1;
+let bracketBoardMetrics = { w: 0, h: 0, labelH: BRACKET_LABEL_H };
+
+function getMatchOutcome(m) {
+  if (!m?.score) {
+    return { homeWin: false, awayWin: false, isDraw: false, hasPenalties: false };
+  }
+
+  const hasPenalties = Array.isArray(m.penalties);
+  let homeWin = m.score[0] > m.score[1];
+  let awayWin = m.score[1] > m.score[0];
+  let isDraw = m.score[0] === m.score[1];
+
+  if (isDraw && hasPenalties) {
+    homeWin = m.penalties[0] > m.penalties[1];
+    awayWin = m.penalties[1] > m.penalties[0];
+    isDraw = false;
+  }
+
+  return { homeWin, awayWin, isDraw, hasPenalties };
+}
+
+function formatMatchScoreText(m, { compact = false } = {}) {
+  if (!m?.score) return '';
+  let text = `${m.score[0]}:${m.score[1]}`;
+  if (m.penalties) {
+    text += compact
+      ? ` (${m.penalties[0]}:${m.penalties[1]})`
+      : ` · 点球 ${m.penalties[0]}:${m.penalties[1]}`;
+  }
+  return text;
+}
+
+function formatMatchPenaltyHtml(m) {
+  if (!m?.penalties) return '';
+  return `<span class="match-pens">点球 ${m.penalties[0]}:${m.penalties[1]}</span>`;
+}
+
+function getMatchById(id) {
+  return WC2026.matches.find((m) => m.id === id);
+}
+
+function bracketColLeft(index) {
+  if (index <= BRACKET_CENTER_COL) {
+    return index * (BRACKET_COL_W + BRACKET_COL_GAP);
+  }
+  const centerLeft = BRACKET_CENTER_COL * (BRACKET_COL_W + BRACKET_COL_GAP);
+  const afterCenter = centerLeft + BRACKET_CENTER_COL_W + BRACKET_COL_GAP;
+  return afterCenter + (index - BRACKET_CENTER_COL - 1) * (BRACKET_COL_W + BRACKET_COL_GAP);
+}
+
+function bracketColWidth(index) {
+  return index === BRACKET_CENTER_COL ? BRACKET_CENTER_COL_W : BRACKET_COL_W;
+}
+
+function bracketColRight(index) {
+  return bracketColLeft(index) + bracketColWidth(index);
+}
+
+function bracketColBridge(index) {
+  return bracketColRight(index) + BRACKET_COL_GAP / 2;
+}
+
+function getKnockoutMatches() {
+  return WC2026.matches.filter((m) => m.group === 'KO').sort((a, b) => a.id - b.id);
+}
+
+function getFilteredKnockoutMatches() {
+  return getKnockoutMatches().filter((m) => {
+    if (knockoutFilter.status !== 'all' && m.status !== knockoutFilter.status) return false;
+    if (knockoutFilter.round === 'all') return true;
+    if (knockoutFilter.round === '决赛') {
+      return m.stage === '三四名决赛' || m.stage === '决赛';
+    }
+    return m.stage === knockoutFilter.round;
+  });
+}
+
+function groupKnockoutByRound(matches) {
+  const grouped = {};
+  matches.forEach((m) => {
+    const key = m.stage || '其他';
+    if (!grouped[key]) grouped[key] = [];
+    grouped[key].push(m);
+  });
+  return KO_ROUND_ORDER.filter((k) => grouped[k]?.length).map((k) => ({
+    stage: k,
+    label: KO_ROUND_LABELS[k] || k,
+    matches: grouped[k].sort(compareMatchesBySchedule),
+  }));
+}
+
+function renderKnockoutProgress() {
+  const el = $('#koProgress');
+  if (!el) return;
+
+  const all = getKnockoutMatches();
+  const steps = [
+    { key: '16强', short: '32强' },
+    { key: '8强', short: '16强' },
+    { key: '四分之一决赛', short: '8强' },
+    { key: '半决赛', short: '半决' },
+    { key: '决赛', short: '决赛', stages: ['三四名决赛', '决赛'] },
+  ];
+
+  el.innerHTML = steps
+    .map((step) => {
+      const roundMatches = all.filter((m) =>
+        step.stages ? step.stages.includes(m.stage) : m.stage === step.key
+      );
+      const total = roundMatches.length;
+      const done = roundMatches.filter((m) => m.status === 'finished').length;
+      const live = roundMatches.filter((m) => m.status === 'live').length;
+      const pct = total ? Math.round((done / total) * 100) : 0;
+      const active = live > 0 ? ' live' : done === total && total > 0 ? ' done' : '';
+
+      return `<div class="ko-progress-step${active}">
+        <div class="ko-progress-bar"><span style="width:${pct}%"></span></div>
+        <span class="ko-progress-label">${step.short}</span>
+        <span class="ko-progress-count">${done}/${total}</span>
+      </div>`;
+    })
+    .join('');
+}
+
+function computeBracketPositions(side) {
+  const tree = KO_BRACKET_TREE[side];
+  const pos = {};
+
+  tree.pairs.forEach(([a, b, r16], i) => {
+    const base = i * BRACKET_PAIR_H;
+    pos[a] = base;
+    pos[b] = base + BRACKET_NODE_H + BRACKET_NODE_GAP;
+    pos[r16] = base + (BRACKET_PAIR_H - BRACKET_NODE_H) / 2;
+  });
+
+  tree.qf.forEach(([a, b, qf]) => {
+    const ca = pos[a] + BRACKET_NODE_H / 2;
+    const cb = pos[b] + BRACKET_NODE_H / 2;
+    pos[qf] = (ca + cb) / 2 - BRACKET_NODE_H / 2;
+  });
+
+  const [a, b, sfId] = tree.sf;
+  const ca = pos[a] + BRACKET_NODE_H / 2;
+  const cb = pos[b] + BRACKET_NODE_H / 2;
+  pos[sfId] = (ca + cb) / 2 - BRACKET_NODE_H / 2;
+
+  return pos;
+}
+
+function renderBracketNode(matchId) {
+  const m = getMatchById(matchId);
+  if (!m) return '';
+
+  const { homeWin, awayWin, hasPenalties } = getMatchOutcome(m);
+  const hasScore = m.score !== null && m.score !== undefined;
+  const pending = m.home === '待定' || m.away === '待定';
+  const minute = m.minute ? ` ${m.minute}'` : '';
+  const isFinal = matchId === 104;
+  const isThird = matchId === 103;
+  const metaExtra =
+    !hasScore && m.status === 'upcoming'
+      ? `<span class="ko-bracket-node-time">${formatDateShort(m.date)} ${m.time}</span>`
+      : hasScore
+        ? `<span class="ko-bracket-node-time">${formatMatchScoreText(m, { compact: true })}</span>`
+        : '';
+
+  return `
+    <div class="ko-bracket-node ${m.status}${pending ? ' pending' : ''}${hasPenalties ? ' pens' : ''}${isFinal ? ' final' : ''}${isThird ? ' third' : ''}" data-match-id="${m.id}">
+      <div class="ko-bracket-node-meta">
+        <span class="ko-bracket-node-id">M${m.id}</span>
+        ${metaExtra}
+        ${m.status === 'live' ? `<span class="match-status live">${STATUS_LABEL.live}${minute}</span>` : ''}
+        ${isFinal ? '<span class="ko-bracket-badge">决赛</span>' : ''}
+        ${isThird ? '<span class="ko-bracket-badge third">季军战</span>' : ''}
+      </div>
+      <div class="ko-bracket-teams">
+        <div class="ko-bracket-team home ${homeWin ? 'winner' : ''}">
+          <span class="ko-bracket-flag">${m.homeFlag}</span>
+          <span class="ko-bracket-name" title="${m.home}">${m.home}</span>
+          ${hasScore ? `<span class="ko-bracket-score">${m.score[0]}</span>` : ''}
+        </div>
+        <div class="ko-bracket-team away ${awayWin ? 'winner' : ''}">
+          <span class="ko-bracket-flag">${m.awayFlag}</span>
+          <span class="ko-bracket-name" title="${m.away}">${m.away}</span>
+          ${hasScore ? `<span class="ko-bracket-score">${m.score[1]}</span>` : ''}
+        </div>
+      </div>
+    </div>`;
+}
+
+function renderBracketColumn(matchIds, positions, colIndex, label) {
+  const left = bracketColLeft(colIndex);
+  const width = bracketColWidth(colIndex);
+  const nodes = matchIds
+    .map((id) => {
+      const top = positions[id];
+      if (top === undefined) return '';
+      return `<div class="ko-bracket-slot" style="top:${top}px">${renderBracketNode(id)}</div>`;
+    })
+    .join('');
+
+  return `
+    <div class="ko-bracket-col" style="left:${left}px;width:${width}px">
+      <div class="ko-bracket-col-body" style="height:${BRACKET_TOTAL_H}px">${nodes}</div>
+    </div>`;
+}
+
+function renderBracketLabels(labels) {
+  return labels
+    .map(
+      ({ index, text }) =>
+        `<span class="ko-bracket-col-label" style="left:${bracketColLeft(index)}px;width:${bracketColWidth(index)}px">${text}</span>`
+    )
+    .join('');
+}
+
+function bracketNodeCenter(positions, id) {
+  return (positions[id] ?? 0) + BRACKET_NODE_H / 2;
+}
+
+function bracketFeedPath(xOut, ySource, xMid, yTarget, xIn) {
+  return `M ${xOut} ${ySource} H ${xMid} V ${yTarget} H ${xIn}`;
+}
+
+function buildBracketSvgLines(leftPos, rightPos, finalTop) {
+  const paths = [];
+
+  const addPairLinks = (pairs, positions, fromCol, toCol) => {
+    const xOut = bracketColRight(fromCol);
+    const xMid = bracketColBridge(fromCol);
+    const xIn = bracketColLeft(toCol);
+    pairs.forEach(([a, b, target]) => {
+      const yt = bracketNodeCenter(positions, target);
+      paths.push(bracketFeedPath(xOut, bracketNodeCenter(positions, a), xMid, yt, xIn));
+      paths.push(bracketFeedPath(xOut, bracketNodeCenter(positions, b), xMid, yt, xIn));
+    });
+  };
+
+  const addMergeLinks = (merges, positions, fromCol, toCol) => {
+    const xOut = bracketColRight(fromCol);
+    const xMid = bracketColBridge(fromCol);
+    const xIn = bracketColLeft(toCol);
+    merges.forEach(([a, b, target]) => {
+      const yt = bracketNodeCenter(positions, target);
+      paths.push(bracketFeedPath(xOut, bracketNodeCenter(positions, a), xMid, yt, xIn));
+      paths.push(bracketFeedPath(xOut, bracketNodeCenter(positions, b), xMid, yt, xIn));
+    });
+  };
+
+  addPairLinks(KO_BRACKET_TREE.left.pairs, leftPos, 0, 1);
+  addMergeLinks(KO_BRACKET_TREE.left.qf, leftPos, 1, 2);
+  addMergeLinks([KO_BRACKET_TREE.left.sf], leftPos, 2, 3);
+
+  const addRightLinks = (merges, positions, fromCol, toCol) => {
+    const xOut = bracketColLeft(fromCol);
+    const xMid = bracketColLeft(fromCol) - BRACKET_COL_GAP / 2;
+    const xIn = bracketColRight(toCol);
+    merges.forEach(([a, b, target]) => {
+      const yt = bracketNodeCenter(positions, target);
+      paths.push(`M ${xOut} ${bracketNodeCenter(positions, a)} H ${xMid} V ${yt} H ${xIn}`);
+      paths.push(`M ${xOut} ${bracketNodeCenter(positions, b)} H ${xMid} V ${yt} H ${xIn}`);
+    });
+  };
+
+  addRightLinks(KO_BRACKET_TREE.right.pairs, rightPos, 8, 7);
+  addRightLinks(KO_BRACKET_TREE.right.qf, rightPos, 7, 6);
+  addRightLinks([KO_BRACKET_TREE.right.sf], rightPos, 6, 5);
+
+  const finalY = finalTop + BRACKET_NODE_H / 2;
+  const finalX = bracketColLeft(BRACKET_CENTER_COL) + BRACKET_CENTER_COL_W / 2;
+  paths.push(
+    bracketFeedPath(
+      bracketColRight(3),
+      bracketNodeCenter(leftPos, 101),
+      bracketColBridge(3),
+      finalY,
+      finalX
+    )
+  );
+  paths.push(
+    `M ${bracketColLeft(5)} ${bracketNodeCenter(rightPos, 102)} H ${bracketColBridge(4)} V ${finalY} H ${finalX}`
+  );
+
+  return paths.map((d) => `<path d="${d}"/>`).join('');
+}
+
+function renderKnockoutBracket() {
+  const container = $('#koBracket');
+  if (!container) return;
+
+  const leftPos = computeBracketPositions('left');
+  const rightPos = computeBracketPositions('right');
+
+  const leftR32 = KO_BRACKET_TREE.left.pairs.flatMap(([a, b]) => [a, b]);
+  const rightR32 = KO_BRACKET_TREE.right.pairs.flatMap(([a, b]) => [a, b]);
+  const leftR16 = KO_BRACKET_TREE.left.pairs.map(([, , id]) => id);
+  const rightR16 = KO_BRACKET_TREE.right.pairs.map(([, , id]) => id);
+  const leftQf = KO_BRACKET_TREE.left.qf.map(([, , id]) => id);
+  const rightQf = KO_BRACKET_TREE.right.qf.map(([, , id]) => id);
+
+  const leftSf = KO_BRACKET_TREE.left.sf[2];
+  const rightSf = KO_BRACKET_TREE.right.sf[2];
+  const finalTop =
+    (bracketNodeCenter(leftPos, leftSf) + bracketNodeCenter(rightPos, rightSf)) / 2 -
+    BRACKET_NODE_H / 2;
+  const thirdTop = finalTop + BRACKET_NODE_H + BRACKET_FINAL_GAP;
+
+  const boardW = bracketColLeft(8) + BRACKET_COL_W;
+  const boardH = BRACKET_TOTAL_H;
+  const centerBodyH = Math.max(boardH, thirdTop + BRACKET_NODE_H + 8);
+  const canvasH = centerBodyH;
+  const svgPaths = buildBracketSvgLines(leftPos, rightPos, finalTop);
+  const labels = [
+    { index: 0, text: '32强' },
+    { index: 1, text: '16强' },
+    { index: 2, text: '8强' },
+    { index: 3, text: '半决赛' },
+    { index: 4, text: '决赛阶段' },
+    { index: 5, text: '半决赛' },
+    { index: 6, text: '8强' },
+    { index: 7, text: '16强' },
+    { index: 8, text: '32强' },
+  ];
+
+  container.innerHTML = `
+    <div class="ko-bracket-toolbar">
+      <span class="ko-bracket-toolbar-label">缩放</span>
+      <button type="button" class="ko-bracket-zoom-btn" data-bracket-zoom="out" aria-label="缩小">−</button>
+      <span class="ko-bracket-zoom-value" id="koZoomLabel">100%</span>
+      <button type="button" class="ko-bracket-zoom-btn" data-bracket-zoom="in" aria-label="放大">+</button>
+      <button type="button" class="ko-bracket-zoom-btn ko-bracket-zoom-reset" data-bracket-zoom="reset">适应屏幕</button>
+    </div>
+    <div class="ko-bracket-viewport" id="koBracketViewport">
+      <div class="ko-bracket-scaler" id="koBracketScaler">
+        <div class="ko-bracket-board" id="koBracketBoard" style="width:${boardW}px;--bracket-node-h:${BRACKET_NODE_H}px">
+          <div class="ko-bracket-labels" style="height:${BRACKET_LABEL_H}px">${renderBracketLabels(labels)}</div>
+          <div class="ko-bracket-canvas" style="height:${canvasH}px">
+            <svg class="ko-bracket-svg" width="${boardW}" height="${canvasH}" aria-hidden="true">
+              ${svgPaths}
+            </svg>
+            ${renderBracketColumn(leftR32, leftPos, 0)}
+            ${renderBracketColumn(leftR16, leftPos, 1)}
+            ${renderBracketColumn(leftQf, leftPos, 2)}
+            ${renderBracketColumn([leftSf], leftPos, 3)}
+            <div class="ko-bracket-col" style="left:${bracketColLeft(4)}px;width:${BRACKET_CENTER_COL_W}px">
+              <div class="ko-bracket-col-body" style="height:${centerBodyH}px">
+                <div class="ko-bracket-slot" style="top:${finalTop}px">${renderBracketNode(104)}</div>
+                <div class="ko-bracket-slot" style="top:${thirdTop}px">${renderBracketNode(103)}</div>
+              </div>
+            </div>
+            ${renderBracketColumn([rightSf], rightPos, 5)}
+            ${renderBracketColumn(rightQf, rightPos, 6)}
+            ${renderBracketColumn(rightR16, rightPos, 7)}
+            ${renderBracketColumn(rightR32, rightPos, 8)}
+          </div>
+        </div>
+      </div>
+    </div>`;
+
+  bracketBoardMetrics = { w: boardW, h: canvasH, labelH: BRACKET_LABEL_H };
+  requestAnimationFrame(() => applyBracketViewportScale());
+}
+
+function applyBracketViewportScale() {
+  const viewport = $('#koBracketViewport');
+  const scaler = $('#koBracketScaler');
+  if (!viewport || !scaler || !bracketBoardMetrics.w) return;
+
+  const { w, h, labelH } = bracketBoardMetrics;
+  const totalH = labelH + 8 + h;
+  const availW = Math.max(viewport.clientWidth - 4, 320);
+  const widthScale = availW / w;
+  // 默认 93%；仅当视口宽度不足时再缩小（不再按高度压到 72%）
+  const baseScale = Math.min(BRACKET_DEFAULT_SCALE, widthScale);
+  const scale = Math.max(0.45, Math.min(1.5, baseScale * bracketUserZoom));
+
+  scaler.style.width = `${w}px`;
+  scaler.style.height = `${totalH}px`;
+  scaler.style.transform = `scale(${scale})`;
+  viewport.style.height = `${Math.ceil(totalH * scale) + 4}px`;
+
+  const label = $('#koZoomLabel');
+  if (label) label.textContent = `${Math.round(scale * 100)}%`;
+}
+
+function initBracketZoomControls() {
+  const container = $('#koBracket');
+  if (!container || container.dataset.zoomBound) return;
+  container.dataset.zoomBound = '1';
+
+  container.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-bracket-zoom]');
+    if (!btn) return;
+    const action = btn.dataset.bracketZoom;
+    if (action === 'in') bracketUserZoom = Math.min(1.5, +(bracketUserZoom + 0.1).toFixed(2));
+    else if (action === 'out') bracketUserZoom = Math.max(0.5, +(bracketUserZoom - 0.1).toFixed(2));
+    else if (action === 'reset') bracketUserZoom = 1;
+    applyBracketViewportScale();
+  });
+
+  if (!window.__bracketResizeBound) {
+    window.__bracketResizeBound = true;
+    window.addEventListener('resize', () => {
+      if (knockoutView === 'bracket') applyBracketViewportScale();
+    });
+  }
+}
+
+function updateKnockoutViewUI() {
+  const isBracket = knockoutView === 'bracket';
+  $('#koBracket')?.classList.toggle('hidden', !isBracket);
+  $('#koListPanel')?.classList.toggle('hidden', isBracket);
+  $$('#koViewTabs .tab-btn').forEach((btn) => {
+    btn.classList.toggle('active', btn.dataset.koView === knockoutView);
+  });
+}
+
+function renderKnockoutMatchCard(m) {
+  const minute = m.minute ? ` ${m.minute}'` : '';
+  const { homeWin, awayWin, isDraw } = getMatchOutcome(m);
+  const hasScore = m.score !== null && m.score !== undefined;
+  const pending = m.home === '待定' || m.away === '待定';
+
+  const scoreHtml = hasScore
+    ? `<div class="match-score-wrap">
+        <span class="ko-card-score">${m.score[0]}<span class="score-sep">:</span>${m.score[1]}</span>
+        ${formatMatchPenaltyHtml(m)}
+      </div>`
+    : `<span class="ko-card-score vs">VS</span>`;
+
+  return `
+    <article class="ko-card ${m.status}${pending ? ' pending' : ''}">
+      <div class="ko-card-head">
+        <span class="ko-card-id">M${m.id}</span>
+        <time class="ko-card-datetime">${formatDateShort(m.date)} ${m.time}</time>
+        <span class="match-status ${m.status}">${STATUS_LABEL[m.status]}${minute}</span>
+      </div>
+      <div class="ko-card-matchup">
+        <div class="ko-card-team ${homeWin ? 'winner' : ''} ${isDraw ? 'draw' : ''}">
+          <span class="ko-card-flag">${m.homeFlag}</span>
+          <span class="ko-card-name">${m.home}</span>
+        </div>
+        ${scoreHtml}
+        <div class="ko-card-team ${awayWin ? 'winner' : ''} ${isDraw ? 'draw' : ''}">
+          <span class="ko-card-flag">${m.awayFlag}</span>
+          <span class="ko-card-name">${m.away}</span>
+        </div>
+      </div>
+      <div class="ko-card-foot">
+        <span>📍 ${m.venue}</span>
+        ${m.timeET ? `<span>${m.timeET}</span>` : ''}
+      </div>
+    </article>`;
+}
+
+function renderKnockout() {
+  renderKnockoutProgress();
+  updateKnockoutViewUI();
+
+  if (knockoutView === 'bracket') {
+    renderKnockoutBracket();
+    return;
+  }
+
+  const matches = getFilteredKnockoutMatches();
+  const summaryEl = $('#koSummary');
+  if (summaryEl) {
+    const live = matches.filter((m) => m.status === 'live').length;
+    const parts = [`共 ${matches.length} 场`];
+    if (live) parts.push(`${live} 场进行中`);
+    summaryEl.textContent = parts.join(' · ');
+  }
+
+  const container = $('#koRounds');
+  if (!container) return;
+
+  if (!matches.length) {
+    container.innerHTML =
+      '<div class="schedule-empty"><span class="schedule-empty-icon">🏆</span><p>当前筛选下暂无淘汰赛</p><p class="schedule-empty-hint">试试切换轮次或状态</p></div>';
+    return;
+  }
+
+  const rounds = groupKnockoutByRound(matches);
+  container.innerHTML = rounds
+    .map(
+      (round) => `
+    <section class="ko-round-block">
+      <header class="ko-round-header">
+        <h3 class="ko-round-title">${round.label}</h3>
+        <span class="ko-round-count">${round.matches.length} 场</span>
+      </header>
+      <div class="ko-card-grid">${round.matches.map(renderKnockoutMatchCard).join('')}</div>
+    </section>`
+    )
+    .join('');
+}
+
+function initKnockoutFilters() {
+  initBracketZoomControls();
+
+  $$('#koViewTabs .tab-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      knockoutView = btn.dataset.koView || 'bracket';
+      renderKnockout();
+    });
+  });
+
+  $$('#koRoundTabs .filter-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      $$('#koRoundTabs .filter-btn').forEach((b) => b.classList.remove('active'));
+      btn.classList.add('active');
+      knockoutFilter.round = btn.dataset.koRound;
+      renderKnockout();
+    });
+  });
+
+  $$('#koStatusTabs .filter-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      $$('#koStatusTabs .filter-btn').forEach((b) => b.classList.remove('active'));
+      btn.classList.add('active');
+      knockoutFilter.status = btn.dataset.koStatus;
+      renderKnockout();
+    });
+  });
 }
 
 /* ===== Standings ===== */
@@ -876,6 +1467,7 @@ function formatDate(dateStr) {
 function refreshCoreViews() {
   renderHero();
   renderSchedule();
+  renderKnockout();
   renderGroupSelector();
   renderStandingsTable();
   renderAllGroups();
@@ -892,6 +1484,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const showSection = initNav();
   document.body.classList.toggle('home-view', $('#home')?.classList.contains('section-active'));
   initScheduleFilters();
+  initKnockoutFilters();
   initStandingsTabs();
   Highlights.init();
 

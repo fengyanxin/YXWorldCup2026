@@ -46,6 +46,7 @@
       <nav class="nav" id="mainNav">
         <a href="#home" class="nav-link active" data-section="home">首页</a>
         <a href="#schedule" class="nav-link" data-section="schedule">赛程</a>
+        <a href="#knockout" class="nav-link" data-section="knockout">淘汰赛</a>
         <a href="#standings" class="nav-link" data-section="standings">榜单</a>
         <a href="#highlights" class="nav-link" data-section="highlights">集锦</a>
         <a href="#live" class="nav-link" data-section="live">
@@ -108,6 +109,40 @@
       </div>
       <div class="schedule-day-header" id="scheduleDayHeader"></div>
       <div class="schedule-list" id="scheduleList"></div>
+    </section>
+
+    <!-- 淘汰赛 -->
+    <section id="knockout" class="section">
+      <div class="section-header">
+        <h2 class="section-title">淘汰赛赛程</h2>
+        <p class="section-sub">32 强 → 决赛 · 单场淘汰 · 北京时间</p>
+      </div>
+      <div class="ko-progress" id="koProgress"></div>
+      <div class="ko-view-tabs" id="koViewTabs">
+        <button class="tab-btn active" data-ko-view="bracket">对阵树</button>
+        <button class="tab-btn" data-ko-view="list">列表</button>
+      </div>
+      <div class="ko-bracket-wrap" id="koBracket"></div>
+      <div class="ko-list-panel hidden" id="koListPanel">
+        <div class="filter-bar ko-filter-bar">
+        <div class="filter-group" id="koRoundTabs">
+          <button class="filter-btn active" data-ko-round="all">全部轮次</button>
+          <button class="filter-btn" data-ko-round="16强">32强</button>
+          <button class="filter-btn" data-ko-round="8强">16强</button>
+          <button class="filter-btn" data-ko-round="四分之一决赛">8强</button>
+          <button class="filter-btn" data-ko-round="半决赛">半决赛</button>
+          <button class="filter-btn" data-ko-round="决赛">决赛阶段</button>
+        </div>
+        <div class="filter-group" id="koStatusTabs">
+          <button class="filter-btn active" data-ko-status="all">全部</button>
+          <button class="filter-btn" data-ko-status="live">进行中</button>
+          <button class="filter-btn" data-ko-status="upcoming">未开始</button>
+          <button class="filter-btn" data-ko-status="finished">已结束</button>
+        </div>
+      </div>
+      <p class="ko-summary" id="koSummary"></p>
+      <div class="ko-rounds" id="koRounds"></div>
+      </div>
     </section>
 
     <!-- 榜单 -->
