@@ -1,0 +1,1070 @@
+{
+  "teams": [
+    {
+      "id": "2",
+      "name_en": "South Africa",
+      "fifa_code": "RSA",
+      "iso2": "ZA",
+      "groups": "A"
+    },
+    {
+      "id": "9",
+      "name_en": "Brazil",
+      "fifa_code": "BRA",
+      "iso2": "BR",
+      "groups": "C"
+    },
+    {
+      "id": "12",
+      "name_en": "Scotland",
+      "fifa_code": "SCO",
+      "iso2": "SCO",
+      "groups": "C"
+    },
+    {
+      "id": "16",
+      "name_en": "Turkey",
+      "fifa_code": "TUR",
+      "iso2": "TR",
+      "groups": "D"
+    },
+    {
+      "id": "19",
+      "name_en": "Ivory Coast",
+      "fifa_code": "CIV",
+      "iso2": "CI",
+      "groups": "E"
+    },
+    {
+      "id": "21",
+      "name_en": "Netherlands",
+      "fifa_code": "NED",
+      "iso2": "NL",
+      "groups": "F"
+    },
+    {
+      "id": "30",
+      "name_en": "Cape Verde",
+      "fifa_code": "CPV",
+      "iso2": "CV",
+      "groups": "H"
+    },
+    {
+      "id": "33",
+      "name_en": "France",
+      "fifa_code": "FRA",
+      "iso2": "FR",
+      "groups": "I"
+    },
+    {
+      "id": "24",
+      "name_en": "Tunisia",
+      "fifa_code": "TUN",
+      "iso2": "TN",
+      "groups": "F"
+    },
+    {
+      "id": "26",
+      "name_en": "Egypt",
+      "fifa_code": "EGY",
+      "iso2": "EG",
+      "groups": "G"
+    },
+    {
+      "id": "35",
+      "name_en": "Iraq",
+      "fifa_code": "IRQ",
+      "iso2": "IQ",
+      "groups": "I"
+    },
+    {
+      "id": "41",
+      "name_en": "Portugal",
+      "fifa_code": "POR",
+      "iso2": "PT",
+      "groups": "K"
+    },
+    {
+      "id": "43",
+      "name_en": "Uzbekistan",
+      "fifa_code": "UZB",
+      "iso2": "UZ",
+      "groups": "K"
+    },
+    {
+      "id": "44",
+      "name_en": "Colombia",
+      "fifa_code": "COL",
+      "iso2": "CO",
+      "groups": "K"
+    },
+    {
+      "id": "20",
+      "name_en": "Ecuador",
+      "fifa_code": "ECU",
+      "iso2": "EC",
+      "groups": "E"
+    },
+    {
+      "id": "22",
+      "name_en": "Japan",
+      "fifa_code": "JPN",
+      "iso2": "JP",
+      "groups": "F"
+    },
+    {
+      "id": "28",
+      "name_en": "New Zealand",
+      "fifa_code": "NZL",
+      "iso2": "NZ",
+      "groups": "G"
+    },
+    {
+      "id": "31",
+      "name_en": "Saudi Arabia",
+      "fifa_code": "KSA",
+      "iso2": "SA",
+      "groups": "H"
+    },
+    {
+      "id": "39",
+      "name_en": "Austria",
+      "fifa_code": "AUT",
+      "iso2": "AT",
+      "groups": "J"
+    },
+    {
+      "id": "47",
+      "name_en": "Ghana",
+      "fifa_code": "GHA",
+      "iso2": "GH",
+      "groups": "L"
+    },
+    {
+      "id": "3",
+      "name_en": "South Korea",
+      "fifa_code": "KOR",
+      "iso2": "KR",
+      "groups": "A"
+    },
+    {
+      "id": "29",
+      "name_en": "Spain",
+      "fifa_code": "ESP",
+      "iso2": "ES",
+      "groups": "H"
+    },
+    {
+      "id": "36",
+      "name_en": "Norway",
+      "fifa_code": "NOR",
+      "iso2": "NO",
+      "groups": "I"
+    },
+    {
+      "id": "37",
+      "name_en": "Argentina",
+      "fifa_code": "ARG",
+      "iso2": "AR",
+      "groups": "J"
+    },
+    {
+      "id": "42",
+      "name_en": "Democratic Republic of the Congo",
+      "fifa_code": "COD",
+      "iso2": "CD",
+      "groups": "K"
+    },
+    {
+      "id": "45",
+      "name_en": "England",
+      "fifa_code": "ENG",
+      "iso2": "ENG",
+      "groups": "L"
+    },
+    {
+      "id": "4",
+      "name_en": "Czech Republic",
+      "fifa_code": "CZE",
+      "iso2": "CZ",
+      "groups": "A"
+    },
+    {
+      "id": "5",
+      "name_en": "Canada",
+      "fifa_code": "CAN",
+      "iso2": "CA",
+      "groups": "B"
+    },
+    {
+      "id": "7",
+      "name_en": "Qatar",
+      "fifa_code": "QAT",
+      "iso2": "QA",
+      "groups": "B"
+    },
+    {
+      "id": "8",
+      "name_en": "Switzerland",
+      "fifa_code": "SUI",
+      "iso2": "CH",
+      "groups": "B"
+    },
+    {
+      "id": "10",
+      "name_en": "Morocco",
+      "fifa_code": "MAR",
+      "iso2": "MA",
+      "groups": "C"
+    },
+    {
+      "id": "14",
+      "name_en": "Paraguay",
+      "fifa_code": "PAR",
+      "iso2": "PY",
+      "groups": "D"
+    },
+    {
+      "id": "18",
+      "name_en": "Curaçao",
+      "fifa_code": "CUW",
+      "iso2": "CW",
+      "groups": "E"
+    },
+    {
+      "id": "23",
+      "name_en": "Sweden",
+      "fifa_code": "SWE",
+      "iso2": "SE",
+      "groups": "F"
+    },
+    {
+      "id": "38",
+      "name_en": "Algeria",
+      "fifa_code": "ALG",
+      "iso2": "DZ",
+      "groups": "J"
+    },
+    {
+      "id": "40",
+      "name_en": "Jordan",
+      "fifa_code": "JOR",
+      "iso2": "JO",
+      "groups": "J"
+    },
+    {
+      "id": "11",
+      "name_en": "Haiti",
+      "fifa_code": "HAI",
+      "iso2": "HT",
+      "groups": "C"
+    },
+    {
+      "id": "17",
+      "name_en": "Germany",
+      "fifa_code": "GER",
+      "iso2": "DE",
+      "groups": "E"
+    },
+    {
+      "id": "32",
+      "name_en": "Uruguay",
+      "fifa_code": "URU",
+      "iso2": "UY",
+      "groups": "H"
+    },
+    {
+      "id": "34",
+      "name_en": "Senegal",
+      "fifa_code": "SEN",
+      "iso2": "SN",
+      "groups": "I"
+    },
+    {
+      "id": "48",
+      "name_en": "Panama",
+      "fifa_code": "PAN",
+      "iso2": "PA",
+      "groups": "L"
+    },
+    {
+      "id": "1",
+      "name_en": "Mexico",
+      "fifa_code": "MEX",
+      "iso2": "MX",
+      "groups": "A"
+    },
+    {
+      "id": "6",
+      "name_en": "Bosnia and Herzegovina",
+      "fifa_code": "BIH",
+      "iso2": "BA",
+      "groups": "B"
+    },
+    {
+      "id": "13",
+      "name_en": "United States",
+      "fifa_code": "USA",
+      "iso2": "US",
+      "groups": "D"
+    },
+    {
+      "id": "15",
+      "name_en": "Australia",
+      "fifa_code": "AUS",
+      "iso2": "AU",
+      "groups": "D"
+    },
+    {
+      "id": "25",
+      "name_en": "Belgium",
+      "fifa_code": "BEL",
+      "iso2": "BE",
+      "groups": "G"
+    },
+    {
+      "id": "27",
+      "name_en": "Iran",
+      "fifa_code": "IRN",
+      "iso2": "IR",
+      "groups": "G"
+    },
+    {
+      "id": "46",
+      "name_en": "Croatia",
+      "fifa_code": "CRO",
+      "iso2": "HR",
+      "groups": "L"
+    }
+  ],
+  "matches": [
+    {
+      "id": "1",
+      "home_team_name_en": "Mexico",
+      "away_team_name_en": "South Africa",
+      "group": "A",
+      "type": "group"
+    },
+    {
+      "id": "2",
+      "home_team_name_en": "South Korea",
+      "away_team_name_en": "Czech Republic",
+      "group": "A",
+      "type": "group"
+    },
+    {
+      "id": "3",
+      "home_team_name_en": "Canada",
+      "away_team_name_en": "Bosnia and Herzegovina",
+      "group": "B",
+      "type": "group"
+    },
+    {
+      "id": "4",
+      "home_team_name_en": "United States",
+      "away_team_name_en": "Paraguay",
+      "group": "D",
+      "type": "group"
+    },
+    {
+      "id": "5",
+      "home_team_name_en": "Haiti",
+      "away_team_name_en": "Scotland",
+      "group": "C",
+      "type": "group"
+    },
+    {
+      "id": "6",
+      "home_team_name_en": "Australia",
+      "away_team_name_en": "Turkey",
+      "group": "D",
+      "type": "group"
+    },
+    {
+      "id": "7",
+      "home_team_name_en": "Brazil",
+      "away_team_name_en": "Morocco",
+      "group": "C",
+      "type": "group"
+    },
+    {
+      "id": "8",
+      "home_team_name_en": "Qatar",
+      "away_team_name_en": "Switzerland",
+      "group": "B",
+      "type": "group"
+    },
+    {
+      "id": "9",
+      "home_team_name_en": "Ivory Coast",
+      "away_team_name_en": "Ecuador",
+      "group": "E",
+      "type": "group"
+    },
+    {
+      "id": "10",
+      "home_team_name_en": "Germany",
+      "away_team_name_en": "Curaçao",
+      "group": "E",
+      "type": "group"
+    },
+    {
+      "id": "11",
+      "home_team_name_en": "Netherlands",
+      "away_team_name_en": "Japan",
+      "group": "F",
+      "type": "group"
+    },
+    {
+      "id": "12",
+      "home_team_name_en": "Sweden",
+      "away_team_name_en": "Tunisia",
+      "group": "F",
+      "type": "group"
+    },
+    {
+      "id": "13",
+      "home_team_name_en": "Iran",
+      "away_team_name_en": "New Zealand",
+      "group": "G",
+      "type": "group"
+    },
+    {
+      "id": "14",
+      "home_team_name_en": "Spain",
+      "away_team_name_en": "Cape Verde",
+      "group": "H",
+      "type": "group"
+    },
+    {
+      "id": "15",
+      "home_team_name_en": "Belgium",
+      "away_team_name_en": "Egypt",
+      "group": "G",
+      "type": "group"
+    },
+    {
+      "id": "16",
+      "home_team_name_en": "Saudi Arabia",
+      "away_team_name_en": "Uruguay",
+      "group": "H",
+      "type": "group"
+    },
+    {
+      "id": "17",
+      "home_team_name_en": "France",
+      "away_team_name_en": "Senegal",
+      "group": "I",
+      "type": "group"
+    },
+    {
+      "id": "18",
+      "home_team_name_en": "Iraq",
+      "away_team_name_en": "Norway",
+      "group": "I",
+      "type": "group"
+    },
+    {
+      "id": "19",
+      "home_team_name_en": "Argentina",
+      "away_team_name_en": "Algeria",
+      "group": "J",
+      "type": "group"
+    },
+    {
+      "id": "20",
+      "home_team_name_en": "Austria",
+      "away_team_name_en": "Jordan",
+      "group": "J",
+      "type": "group"
+    },
+    {
+      "id": "21",
+      "home_team_name_en": "Portugal",
+      "away_team_name_en": "Democratic Republic of the Congo",
+      "group": "K",
+      "type": "group"
+    },
+    {
+      "id": "22",
+      "home_team_name_en": "England",
+      "away_team_name_en": "Croatia",
+      "group": "L",
+      "type": "group"
+    },
+    {
+      "id": "23",
+      "home_team_name_en": "Uzbekistan",
+      "away_team_name_en": "Colombia",
+      "group": "K",
+      "type": "group"
+    },
+    {
+      "id": "24",
+      "home_team_name_en": "Ghana",
+      "away_team_name_en": "Panama",
+      "group": "L",
+      "type": "group"
+    },
+    {
+      "id": "25",
+      "home_team_name_en": "Mexico",
+      "away_team_name_en": "South Korea",
+      "group": "A",
+      "type": "group"
+    },
+    {
+      "id": "26",
+      "home_team_name_en": "Switzerland",
+      "away_team_name_en": "Bosnia and Herzegovina",
+      "group": "B",
+      "type": "group"
+    },
+    {
+      "id": "27",
+      "home_team_name_en": "Canada",
+      "away_team_name_en": "Qatar",
+      "group": "B",
+      "type": "group"
+    },
+    {
+      "id": "28",
+      "home_team_name_en": "Czech Republic",
+      "away_team_name_en": "South Africa",
+      "group": "A",
+      "type": "group"
+    },
+    {
+      "id": "29",
+      "home_team_name_en": "Brazil",
+      "away_team_name_en": "Haiti",
+      "group": "C",
+      "type": "group"
+    },
+    {
+      "id": "30",
+      "home_team_name_en": "Scotland",
+      "away_team_name_en": "Morocco",
+      "group": "C",
+      "type": "group"
+    },
+    {
+      "id": "31",
+      "home_team_name_en": "United States",
+      "away_team_name_en": "Australia",
+      "group": "D",
+      "type": "group"
+    },
+    {
+      "id": "32",
+      "home_team_name_en": "Turkey",
+      "away_team_name_en": "Paraguay",
+      "group": "D",
+      "type": "group"
+    },
+    {
+      "id": "33",
+      "home_team_name_en": "Germany",
+      "away_team_name_en": "Ivory Coast",
+      "group": "E",
+      "type": "group"
+    },
+    {
+      "id": "34",
+      "home_team_name_en": "Ecuador",
+      "away_team_name_en": "Curaçao",
+      "group": "E",
+      "type": "group"
+    },
+    {
+      "id": "35",
+      "home_team_name_en": "Netherlands",
+      "away_team_name_en": "Sweden",
+      "group": "F",
+      "type": "group"
+    },
+    {
+      "id": "36",
+      "home_team_name_en": "Tunisia",
+      "away_team_name_en": "Japan",
+      "group": "F",
+      "type": "group"
+    },
+    {
+      "id": "37",
+      "home_team_name_en": "Belgium",
+      "away_team_name_en": "Iran",
+      "group": "G",
+      "type": "group"
+    },
+    {
+      "id": "38",
+      "home_team_name_en": "New Zealand",
+      "away_team_name_en": "Egypt",
+      "group": "G",
+      "type": "group"
+    },
+    {
+      "id": "39",
+      "home_team_name_en": "Spain",
+      "away_team_name_en": "Saudi Arabia",
+      "group": "H",
+      "type": "group"
+    },
+    {
+      "id": "40",
+      "home_team_name_en": "Uruguay",
+      "away_team_name_en": "Cape Verde",
+      "group": "H",
+      "type": "group"
+    },
+    {
+      "id": "41",
+      "home_team_name_en": "France",
+      "away_team_name_en": "Iraq",
+      "group": "I",
+      "type": "group"
+    },
+    {
+      "id": "42",
+      "home_team_name_en": "Norway",
+      "away_team_name_en": "Senegal",
+      "group": "I",
+      "type": "group"
+    },
+    {
+      "id": "43",
+      "home_team_name_en": "Argentina",
+      "away_team_name_en": "Austria",
+      "group": "J",
+      "type": "group"
+    },
+    {
+      "id": "44",
+      "home_team_name_en": "Jordan",
+      "away_team_name_en": "Algeria",
+      "group": "J",
+      "type": "group"
+    },
+    {
+      "id": "45",
+      "home_team_name_en": "Portugal",
+      "away_team_name_en": "Uzbekistan",
+      "group": "K",
+      "type": "group"
+    },
+    {
+      "id": "46",
+      "home_team_name_en": "Panama",
+      "away_team_name_en": "Croatia",
+      "group": "L",
+      "type": "group"
+    },
+    {
+      "id": "47",
+      "home_team_name_en": "Colombia",
+      "away_team_name_en": "Democratic Republic of the Congo",
+      "group": "K",
+      "type": "group"
+    },
+    {
+      "id": "48",
+      "home_team_name_en": "England",
+      "away_team_name_en": "Ghana",
+      "group": "L",
+      "type": "group"
+    },
+    {
+      "id": "49",
+      "home_team_name_en": "Scotland",
+      "away_team_name_en": "Brazil",
+      "group": "C",
+      "type": "group"
+    },
+    {
+      "id": "50",
+      "home_team_name_en": "Morocco",
+      "away_team_name_en": "Haiti",
+      "group": "C",
+      "type": "group"
+    },
+    {
+      "id": "51",
+      "home_team_name_en": "South Africa",
+      "away_team_name_en": "South Korea",
+      "group": "A",
+      "type": "group"
+    },
+    {
+      "id": "52",
+      "home_team_name_en": "Czech Republic",
+      "away_team_name_en": "Mexico",
+      "group": "A",
+      "type": "group"
+    },
+    {
+      "id": "53",
+      "home_team_name_en": "Bosnia and Herzegovina",
+      "away_team_name_en": "Qatar",
+      "group": "B",
+      "type": "group"
+    },
+    {
+      "id": "54",
+      "home_team_name_en": "Switzerland",
+      "away_team_name_en": "Canada",
+      "group": "B",
+      "type": "group"
+    },
+    {
+      "id": "55",
+      "home_team_name_en": "Curaçao",
+      "away_team_name_en": "Ivory Coast",
+      "group": "E",
+      "type": "group"
+    },
+    {
+      "id": "56",
+      "home_team_name_en": "Ecuador",
+      "away_team_name_en": "Germany",
+      "group": "E",
+      "type": "group"
+    },
+    {
+      "id": "57",
+      "home_team_name_en": "Paraguay",
+      "away_team_name_en": "Australia",
+      "group": "D",
+      "type": "group"
+    },
+    {
+      "id": "58",
+      "home_team_name_en": "Turkey",
+      "away_team_name_en": "United States",
+      "group": "D",
+      "type": "group"
+    },
+    {
+      "id": "59",
+      "home_team_name_en": "Japan",
+      "away_team_name_en": "Sweden",
+      "group": "F",
+      "type": "group"
+    },
+    {
+      "id": "60",
+      "home_team_name_en": "Tunisia",
+      "away_team_name_en": "Netherlands",
+      "group": "F",
+      "type": "group"
+    },
+    {
+      "id": "61",
+      "home_team_name_en": "Senegal",
+      "away_team_name_en": "Iraq",
+      "group": "I",
+      "type": "group"
+    },
+    {
+      "id": "62",
+      "home_team_name_en": "Norway",
+      "away_team_name_en": "France",
+      "group": "I",
+      "type": "group"
+    },
+    {
+      "id": "63",
+      "home_team_name_en": "Egypt",
+      "away_team_name_en": "Iran",
+      "group": "G",
+      "type": "group"
+    },
+    {
+      "id": "64",
+      "home_team_name_en": "New Zealand",
+      "away_team_name_en": "Belgium",
+      "group": "G",
+      "type": "group"
+    },
+    {
+      "id": "65",
+      "home_team_name_en": "Cape Verde",
+      "away_team_name_en": "Saudi Arabia",
+      "group": "H",
+      "type": "group"
+    },
+    {
+      "id": "66",
+      "home_team_name_en": "Uruguay",
+      "away_team_name_en": "Spain",
+      "group": "H",
+      "type": "group"
+    },
+    {
+      "id": "67",
+      "home_team_name_en": "Panama",
+      "away_team_name_en": "England",
+      "group": "L",
+      "type": "group"
+    },
+    {
+      "id": "68",
+      "home_team_name_en": "Croatia",
+      "away_team_name_en": "Ghana",
+      "group": "L",
+      "type": "group"
+    },
+    {
+      "id": "69",
+      "home_team_name_en": "Algeria",
+      "away_team_name_en": "Austria",
+      "group": "J",
+      "type": "group"
+    },
+    {
+      "id": "70",
+      "home_team_name_en": "Jordan",
+      "away_team_name_en": "Argentina",
+      "group": "J",
+      "type": "group"
+    },
+    {
+      "id": "71",
+      "home_team_name_en": "Colombia",
+      "away_team_name_en": "Portugal",
+      "group": "K",
+      "type": "group"
+    },
+    {
+      "id": "72",
+      "home_team_name_en": "Democratic Republic of the Congo",
+      "away_team_name_en": "Uzbekistan",
+      "group": "K",
+      "type": "group"
+    },
+    {
+      "id": "73",
+      "home_team_name_en": "South Africa",
+      "away_team_name_en": "Canada",
+      "group": "R32",
+      "type": "r32"
+    },
+    {
+      "id": "74",
+      "home_team_name_en": "Germany",
+      "away_team_name_en": "Paraguay",
+      "group": "R32",
+      "type": "r32"
+    },
+    {
+      "id": "75",
+      "home_team_name_en": "Netherlands",
+      "away_team_name_en": "Morocco",
+      "group": "R32",
+      "type": "r32"
+    },
+    {
+      "id": "76",
+      "home_team_name_en": "Brazil",
+      "away_team_name_en": "Japan",
+      "group": "R32",
+      "type": "r32"
+    },
+    {
+      "id": "77",
+      "home_team_name_en": "France",
+      "away_team_name_en": "Sweden",
+      "group": "R32",
+      "type": "r32"
+    },
+    {
+      "id": "78",
+      "home_team_name_en": "Ivory Coast",
+      "away_team_name_en": "Norway",
+      "group": "R32",
+      "type": "r32"
+    },
+    {
+      "id": "79",
+      "home_team_name_en": "Mexico",
+      "away_team_name_en": "Ecuador",
+      "group": "R32",
+      "type": "r32"
+    },
+    {
+      "id": "80",
+      "home_team_name_en": "England",
+      "away_team_name_en": "Democratic Republic of the Congo",
+      "group": "R32",
+      "type": "r32"
+    },
+    {
+      "id": "81",
+      "home_team_name_en": "United States",
+      "away_team_name_en": "Bosnia and Herzegovina",
+      "group": "R32",
+      "type": "r32"
+    },
+    {
+      "id": "82",
+      "home_team_name_en": "Belgium",
+      "away_team_name_en": "Senegal",
+      "group": "R32",
+      "type": "r32"
+    },
+    {
+      "id": "83",
+      "home_team_name_en": "Portugal",
+      "away_team_name_en": "Croatia",
+      "group": "R32",
+      "type": "r32"
+    },
+    {
+      "id": "84",
+      "home_team_name_en": "Spain",
+      "away_team_name_en": "Austria",
+      "group": "R32",
+      "type": "r32"
+    },
+    {
+      "id": "85",
+      "home_team_name_en": "Switzerland",
+      "away_team_name_en": "Algeria",
+      "group": "R32",
+      "type": "r32"
+    },
+    {
+      "id": "86",
+      "home_team_name_en": "Argentina",
+      "away_team_name_en": "Cape Verde",
+      "group": "R32",
+      "type": "r32"
+    },
+    {
+      "id": "87",
+      "home_team_name_en": "Colombia",
+      "away_team_name_en": "Ghana",
+      "group": "R32",
+      "type": "r32"
+    },
+    {
+      "id": "88",
+      "home_team_name_en": "Australia",
+      "away_team_name_en": "Egypt",
+      "group": "R32",
+      "type": "r32"
+    },
+    {
+      "id": "89",
+      "home_team_name_en": "Paraguay",
+      "away_team_name_en": "France",
+      "group": "R16",
+      "type": "r16"
+    },
+    {
+      "id": "90",
+      "home_team_name_en": "Canada",
+      "away_team_name_en": "Morocco",
+      "group": "R16",
+      "type": "r16"
+    },
+    {
+      "id": "91",
+      "home_team_name_en": "Brazil",
+      "away_team_name_en": "Norway",
+      "group": "R16",
+      "type": "r16"
+    },
+    {
+      "id": "92",
+      "home_team_name_en": "Mexico",
+      "away_team_name_en": "England",
+      "group": "R16",
+      "type": "r16"
+    },
+    {
+      "id": "93",
+      "home_team_name_en": "Portugal",
+      "away_team_name_en": "Spain",
+      "group": "R16",
+      "type": "r16"
+    },
+    {
+      "id": "94",
+      "home_team_name_en": "United States",
+      "away_team_name_en": "Belgium",
+      "group": "R16",
+      "type": "r16"
+    },
+    {
+      "id": "95",
+      "home_team_name_en": "Winner Match 86",
+      "away_team_name_en": "Winner Match 88",
+      "group": "R16",
+      "type": "r16"
+    },
+    {
+      "id": "96",
+      "home_team_name_en": "Winner Match 85",
+      "away_team_name_en": "Winner Match 87",
+      "group": "R16",
+      "type": "r16"
+    },
+    {
+      "id": "97",
+      "home_team_name_en": "Winner Match 89",
+      "away_team_name_en": "Winner Match 90",
+      "group": "QF",
+      "type": "qf"
+    },
+    {
+      "id": "98",
+      "home_team_name_en": "Winner Match 93",
+      "away_team_name_en": "Winner Match 94",
+      "group": "QF",
+      "type": "qf"
+    },
+    {
+      "id": "99",
+      "home_team_name_en": "Winner Match 91",
+      "away_team_name_en": "Winner Match 92",
+      "group": "QF",
+      "type": "qf"
+    },
+    {
+      "id": "100",
+      "home_team_name_en": "Winner Match 95",
+      "away_team_name_en": "Winner Match 96",
+      "group": "QF",
+      "type": "qf"
+    },
+    {
+      "id": "101",
+      "home_team_name_en": "Winner Match 97",
+      "away_team_name_en": "Winner Match 98",
+      "group": "SF",
+      "type": "sf"
+    },
+    {
+      "id": "102",
+      "home_team_name_en": "Winner Match 99",
+      "away_team_name_en": "Winner Match 100",
+      "group": "SF",
+      "type": "sf"
+    },
+    {
+      "id": "103",
+      "home_team_name_en": "Loser Match 101",
+      "away_team_name_en": "Loser Match 102",
+      "group": "3RD",
+      "type": "third"
+    },
+    {
+      "id": "104",
+      "home_team_name_en": "Winner Match 101",
+      "away_team_name_en": "Winner Match 102",
+      "group": "FINAL",
+      "type": "final"
+    }
+  ]
+}

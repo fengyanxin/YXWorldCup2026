@@ -1,9 +1,17 @@
-const API_BASE = 'https://worldcup26.ir';
+import { buildApifootballSyncPayload, getApifootballKey } from '../../scripts/apifootball-sync.mjs';
+import {
+  attachWcup2026Scorers,
+  countFinishedGames,
+  isApifootballPlanError,
+} from '../../scripts/wcup2026-sync.mjs';
+
+const FALLBACK_API_BASE = 'https://worldcup26.ir';
 const ALLOWED_PREFIXES = ['/get/games', '/get/groups', '/get/teams', '/get/stadiums', '/get/game/'];
-const SYNC_ENDPOINTS = ['/get/games', '/get/groups', '/get/teams'];
-const SYNC_CACHE_TTL_MS = 60_000;
+const FALLBACK_SYNC_ENDPOINTS = ['/get/games', '/get/groups', '/get/teams'];
+const SYNC_CACHE_TTL_MS = 90_000;
 
 let syncCache = { payload: null, ts: 0 };
+let apifootballPlanBlockedUntil = 0;
 
 function normalizePayload(endpoint, raw) {
   const data = typeof raw === 'string' ? JSON.parse(raw) : raw;
@@ -13,35 +21,74 @@ function normalizePayload(endpoint, raw) {
   return data;
 }
 
-async function fetchUpstream(endpoint, timeoutMs = 25000) {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeoutMs);
-  try {
-    const res = await fetch(`${API_BASE}${endpoint}`, {
-      signal: controller.signal,
-      headers: { 'User-Agent': 'worldcup-2026/1.0', Accept: 'application/json' },
-    });
-    if (!res.ok) throw new Error(`${endpoint} → ${res.status}`);
-    return normalizePayload(endpoint, await res.text());
-  } finally {
-    clearTimeout(timer);
-  }
+async function fetchFallback(endpoint) {
+  const res = await fetch(`${FALLBACK_API_BASE}${endpoint}`, {
+    headers: { 'User-Agent': 'worldcup-2026/1.0', Accept: 'application/json' },
+  });
+  if (!res.ok) throw new Error(`${endpoint} → ${res.status}`);
+  return normalizePayload(endpoint, await res.text());
 }
 
-async function buildSyncPayload(force = false) {
+async function buildFallbackSyncPayload() {
+  const [games, groups, teams] = await Promise.all(FALLBACK_SYNC_ENDPOINTS.map((ep) => fetchFallback(ep)));
+  return {
+    games,
+    groups,
+    teams,
+    source: 'worldcup26.ir',
+    fromCache: false,
+  };
+}
+
+function resolveApiKey() {
+  if (typeof Netlify !== 'undefined' && Netlify.env?.get) {
+    return getApifootballKey({ APIFOOTBALL_KEY: Netlify.env.get('APIFOOTBALL_KEY'), API_FOOTBALL_KEY: Netlify.env.get('API_FOOTBALL_KEY') });
+  }
+  return getApifootballKey(typeof Deno !== 'undefined' ? Deno.env.toObject() : {});
+}
+
+async function buildSyncPayload(force = false, origin) {
   const now = Date.now();
   if (!force && syncCache.payload && now - syncCache.ts < SYNC_CACHE_TTL_MS) {
     return { ...syncCache.payload, fromCache: true };
   }
 
-  const [games, groups, teams] = await Promise.all(SYNC_ENDPOINTS.map((ep) => fetchUpstream(ep)));
-  const payload = {
-    games,
-    groups,
-    teams,
-    syncedAt: now,
-    fromCache: false,
-  };
+  const apiKey = resolveApiKey();
+  let payload = null;
+  let syncError = null;
+  let fallbackReason = null;
+
+  if (apiKey && now >= apifootballPlanBlockedUntil) {
+    try {
+      payload = await buildApifootballSyncPayload(apiKey, origin);
+    } catch (err) {
+      syncError = String(err);
+      if (isApifootballPlanError(syncError)) {
+        fallbackReason = 'apifootball_plan';
+        apifootballPlanBlockedUntil = now + 86400000;
+      } else {
+        fallbackReason = 'apifootball_error';
+      }
+    }
+  } else if (apiKey) {
+    fallbackReason = 'apifootball_plan';
+  }
+
+  if (!payload) {
+    payload = await buildFallbackSyncPayload();
+    payload.scorerFinishedGames = countFinishedGames(payload.games);
+    await attachWcup2026Scorers(payload);
+    if (fallbackReason || syncError) {
+      payload.fallback = true;
+      payload.fallbackReason = fallbackReason || 'apifootball_error';
+      if (fallbackReason !== 'apifootball_plan') {
+        payload.syncError = syncError;
+      }
+    }
+  }
+
+  payload.syncedAt = now;
+  payload.fromCache = false;
   syncCache = { payload, ts: now };
   return payload;
 }
@@ -70,28 +117,49 @@ export default async (request) => {
   }
 
   try {
-  const url = new URL(request.url);
-  const endpoint = url.pathname.replace(/^\/api/, '') + url.search;
+    const url = new URL(request.url);
+    const endpoint = url.pathname.replace(/^\/api/, '') + url.search;
 
-  if (endpoint.startsWith('/sync')) {
-    const force = ['1', 'true', 'yes'].includes(url.searchParams.get('force'));
-    try {
-      return jsonResponse(await buildSyncPayload(force));
-    } catch (err) {
-      return jsonResponse({ error: String(err) }, 502);
+    if (endpoint.startsWith('/sync')) {
+      const force = ['1', 'true', 'yes'].includes(url.searchParams.get('force'));
+      try {
+        return jsonResponse(await buildSyncPayload(force, url.origin));
+      } catch (err) {
+        return jsonResponse({ error: String(err) }, 502);
+      }
     }
-  }
 
-  if (endpoint.startsWith('/highlights')) {
+    if (endpoint.startsWith('/highlights')) {
+      try {
+        const res = await fetch(`${url.origin}/data/highlights.json`, {
+          headers: { Accept: 'application/json' },
+        });
+        if (!res.ok) throw new Error(`highlights.json → ${res.status}`);
+        const body = await res.text();
+        return new Response(body, {
+          status: 200,
+          headers: {
+            'Content-Type': 'application/json; charset=utf-8',
+            'Access-Control-Allow-Origin': '*',
+            'Cache-Control': 'no-store',
+          },
+        });
+      } catch (err) {
+        return jsonResponse({ error: String(err) }, 502);
+      }
+    }
+
+    if (!ALLOWED_PREFIXES.some((p) => endpoint.startsWith(p))) {
+      return jsonResponse({ error: 'API route not allowed' }, 404);
+    }
+
     try {
-      const origin = url.origin;
-      const res = await fetch(`${origin}/data/highlights.json`, {
-        headers: { Accept: 'application/json' },
+      const upstream = await fetch(`${FALLBACK_API_BASE}${endpoint}`, {
+        headers: { 'User-Agent': 'worldcup-2026/1.0', Accept: 'application/json' },
       });
-      if (!res.ok) throw new Error(`highlights.json → ${res.status}`);
-      const body = await res.text();
+      const body = await upstream.text();
       return new Response(body, {
-        status: 200,
+        status: upstream.status,
         headers: {
           'Content-Type': 'application/json; charset=utf-8',
           'Access-Control-Allow-Origin': '*',
@@ -101,28 +169,6 @@ export default async (request) => {
     } catch (err) {
       return jsonResponse({ error: String(err) }, 502);
     }
-  }
-
-  if (!ALLOWED_PREFIXES.some((p) => endpoint.startsWith(p))) {
-    return jsonResponse({ error: 'API route not allowed' }, 404);
-  }
-
-  try {
-    const upstream = await fetch(`${API_BASE}${endpoint}`, {
-      headers: { 'User-Agent': 'worldcup-2026/1.0', Accept: 'application/json' },
-    });
-    const body = await upstream.text();
-    return new Response(body, {
-      status: upstream.status,
-      headers: {
-        'Content-Type': 'application/json; charset=utf-8',
-        'Access-Control-Allow-Origin': '*',
-        'Cache-Control': 'no-store',
-      },
-    });
-  } catch (err) {
-    return jsonResponse({ error: String(err) }, 502);
-  }
   } catch (err) {
     return jsonResponse({ error: String(err) }, 500);
   }

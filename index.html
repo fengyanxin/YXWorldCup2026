@@ -9,7 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
   <script>
-    window.__syncPrefetch = fetch('/api/sync', {
+    window.__syncPrefetch = fetch('/api/sync?force=1&_=' + Date.now(), {
       cache: 'no-store',
       credentials: 'same-origin',
       headers: { Accept: 'application/json' },
@@ -207,7 +207,7 @@
   </main>
 
   <footer class="footer">
-    <p>2026 FIFA World Cup™ · 实时数据来自 <a href="https://worldcup26.ir" target="_blank" rel="noopener">worldcup26.ir</a> · 非官方产品</p>
+    <p>2026 FIFA World Cup™ · 赛程 worldcup26.ir · 射手榜 wcup2026.org · 非官方产品</p>
     <p>主办城市：纽约 · 洛杉矶 · 墨西哥城 · 多伦多 · 温哥华 等 16 座城市</p>
   </footer>
 

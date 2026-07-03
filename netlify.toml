@@ -41,6 +41,24 @@
     Pragma = "no-cache"
 
 [[headers]]
+  for = "/js/app.js"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"
+    Pragma = "no-cache"
+
+[[headers]]
+  for = "/js/live-data.js"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"
+    Pragma = "no-cache"
+
+[[headers]]
+  for = "/js/scorer-map.js"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"
+    Pragma = "no-cache"
+
+[[headers]]
   for = "/js/highlights-snapshot.js"
   [headers.values]
     Cache-Control = "no-cache, no-store, must-revalidate"

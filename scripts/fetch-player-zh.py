@@ -75,7 +75,8 @@ CORRUPTED_REPAIR = {
 PLAYER_ZH = {
     'Lionel Messi': '梅西',
     'L. Messi': '梅西',
-    'Cristiano Ronaldo': 'C罗',
+    'Cristiano Ronaldo': '克里斯蒂亚诺·罗纳尔多',
+    'C. Ronaldo': '克里斯蒂亚诺·罗纳尔多',
     'Harry Kane': '凯恩',
     'H. Kane': '凯恩',
     'Kylian Mbappé': '姆巴佩',
@@ -260,7 +261,7 @@ PLAYER_ZH = {
 }
 
 LASTNAME_ZH = {
-    'Messi': '梅西', 'Ronaldo': 'C罗', 'Kane': '凯恩', 'Mbappé': '姆巴佩', 'Haaland': '哈兰德',
+    'Messi': '梅西', 'Ronaldo': '罗纳尔多', 'Kane': '凯恩', 'Mbappé': '姆巴佩', 'Haaland': '哈兰德',
     'Havertz': '哈弗茨', 'Balogun': '巴洛贡', 'Júnior': '维尼修斯', 'Bellingham': '贝林厄姆',
     'Díaz': '迪亚斯', 'Musiala': '穆西亚拉', 'Jiménez': '希门尼斯', 'Quiñones': '基尼奥内斯',
     'David': '戴维', 'Cunha': '库尼亚', 'Oyarzabal': '奥亚萨瓦尔', 'Reyna': '雷纳', 'Embolo': '恩博洛',
@@ -377,6 +378,14 @@ def transliterate_word(word: str) -> str:
     return word
 
 
+def has_residual_latin(text: str) -> bool:
+    if not text:
+        return True
+    if re.search(r'[\u4e00-\u9fff]', text):
+        return bool(re.search(r'[A-Za-zÀ-ÿ]{2,}', text))
+    return bool(re.search(r'[A-Za-zÀ-ÿ]', text))
+
+
 def to_chinese(name: str) -> str:
     canonical = repair_name(name)
     if canonical in PLAYER_ZH:
@@ -396,18 +405,18 @@ def to_chinese(name: str) -> str:
         if re.match(r'^[A-Z]\.', first):
             return last_zh
         first_zh = '·'.join(transliterate_word(w) for w in first.split())
-        if first_zh and not re.search(r'[A-Za-z]', first_zh):
+        if first_zh and not has_residual_latin(first_zh):
             return f'{first_zh}·{last_zh}'
         return last_zh
 
     if len(parts) == 1:
         w = transliterate_word(parts[0])
-        return w if not re.search(r'[A-Za-z]', w) else phonetic_fallback(parts[0])
+        return w if not has_residual_latin(w) else phonetic_fallback(parts[0])
 
     first = '·'.join(transliterate_word(w) for w in parts[:-1])
     last = transliterate_word(parts[-1])
     merged = f'{first}·{last}' if first else last
-    if re.search(r'[A-Za-z]', merged):
+    if has_residual_latin(merged):
         return phonetic_fallback(canonical)
     return merged
 
@@ -493,7 +502,7 @@ def main() -> int:
     mapping: dict[str, str] = {}
     for name in sorted(names):
         zh = to_chinese(name)
-        if re.search(r'[A-Za-zÀ-ÿ]', zh):
+        if has_residual_latin(zh):
             zh = phonetic_fallback(repair_name(name))
         mapping[name] = zh
 
@@ -509,7 +518,7 @@ def main() -> int:
         + ';\n',
         encoding='utf-8',
     )
-    latin_left = sum(1 for v in mapping.values() if re.search(r'[A-Za-zÀ-ÿ]', v))
+    latin_left = sum(1 for v in mapping.values() if has_residual_latin(v))
     print(f'fetch-player-zh: wrote {len(mapping)} names → {OUT.name} (latin left: {latin_left})')
     return 0
 

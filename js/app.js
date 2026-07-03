@@ -640,24 +640,18 @@ function renderAllGroups() {
 
 function renderScorers() {
   const rows = WC2026.scorers || [];
-  const syncHint = LiveData.lastSync
-    ? `<p class="scorers-sync-hint">更新于 ${LiveData.lastSync.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}${LiveData.syncing ? ' · 正在刷新…' : ''}${LiveData.error ? ' · 同步失败，显示缓存数据' : ''}</p>`
-    : LiveData.syncing
-      ? '<p class="scorers-sync-hint">正在加载最新射手榜…</p>'
-      : '';
 
   if (!rows.length && LiveData.syncing) {
-    $('#scorersTable').innerHTML = `${syncHint}<div class="stream-empty"><p>正在同步最新进球数据…</p></div>`;
+    $('#scorersTable').innerHTML = '<div class="stream-empty"><p>正在同步最新进球数据…</p></div>';
     return;
   }
 
   if (!rows.length) {
-    $('#scorersTable').innerHTML = `${syncHint}<div class="stream-empty"><p>暂无射手数据</p></div>`;
+    $('#scorersTable').innerHTML = '<div class="stream-empty"><p>暂无射手数据，请稍后重试</p></div>';
     return;
   }
 
   $('#scorersTable').innerHTML = `
-    ${syncHint}
     <div style="display:grid;grid-template-columns:40px 1fr 60px 60px 60px;gap:12px;padding:8px 20px;font-size:12px;color:var(--text-dim);margin-bottom:4px;">
       <span>#</span><span>球员</span><span style="text-align:center">进球</span>
       <span style="text-align:center">助攻</span><span style="text-align:center">分钟</span>
@@ -679,11 +673,29 @@ function renderScorers() {
       .join('')}`;
 }
 
+let scorersRefreshTimer = null;
+
+function stopScorersAutoRefresh() {
+  if (scorersRefreshTimer) {
+    clearInterval(scorersRefreshTimer);
+    scorersRefreshTimer = null;
+  }
+}
+
+function startScorersAutoRefresh() {
+  stopScorersAutoRefresh();
+  scorersRefreshTimer = setInterval(() => {
+    if (document.hidden) return;
+    if (!$('#scorersPanel')?.classList.contains('active')) return;
+    refreshStandingsData({ force: true, silent: true });
+  }, 45000);
+}
+
 function refreshStandingsData(options = {}) {
-  renderScorers();
-  return LiveData.refresh(options).then((ok) => {
-    if (ok) refreshCoreViews();
-    else renderScorers();
+  if (!options.silent) renderScorers();
+  return LiveData.refreshScorers(options).then((ok) => {
+    refreshCoreViews();
+    if ($('#scorersPanel')?.classList.contains('active')) startScorersAutoRefresh();
     return ok;
   });
 }
@@ -698,6 +710,8 @@ function initStandingsTabs() {
 
       if (btn.dataset.tab === 'scorers') {
         refreshStandingsData({ force: true });
+      } else {
+        stopScorersAutoRefresh();
       }
     });
   });

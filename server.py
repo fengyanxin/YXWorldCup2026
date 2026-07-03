@@ -4,28 +4,72 @@
 import json
 import os
 import ssl
+import sys
 import threading
 import time
 import urllib.error
 import urllib.request
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
+from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
 PORT = 8765
-ROOT = os.path.dirname(os.path.abspath(__file__))
-HIGHLIGHTS_JSON = os.path.join(ROOT, 'data', 'highlights.json')
-API_BASE = 'https://worldcup26.ir'
+ROOT = Path(__file__).resolve().parent
+SCRIPTS = ROOT / 'scripts'
+HIGHLIGHTS_JSON = ROOT / 'data' / 'highlights.json'
+FALLBACK_API_BASE = 'https://worldcup26.ir'
 ALLOWED_API_PREFIXES = ('/get/games', '/get/groups', '/get/teams', '/get/stadiums', '/get/game/')
-SYNC_ENDPOINTS = ('/get/games', '/get/groups', '/get/teams')
-SYNC_CACHE_TTL = 60
+FALLBACK_SYNC_ENDPOINTS = ('/get/games', '/get/groups', '/get/teams')
+SYNC_CACHE_TTL = 90
 
 SYNC_CACHE = {'payload': None, 'ts': 0.0}
 SYNC_LOCK = threading.Lock()
 SSL_CTX = ssl.create_default_context()
+APIFOOTBALL_PLAN_BLOCKED_UNTIL = 0.0
+
+if str(SCRIPTS) not in sys.path:
+    sys.path.insert(0, str(SCRIPTS))
 
 
-def normalize_api_payload(endpoint, raw):
+def load_dotenv(path: Path) -> None:
+    if not path.is_file():
+        return
+    for line in path.read_text(encoding='utf-8').splitlines():
+        line = line.strip()
+        if not line or line.startswith('#') or '=' not in line:
+            continue
+        key, _, value = line.partition('=')
+        key = key.strip()
+        value = value.strip().strip('"').strip("'")
+        if key and key not in os.environ:
+            os.environ[key] = value
+
+
+load_dotenv(ROOT / '.env')
+
+
+def get_apifootball_key() -> str:
+    return (os.environ.get('APIFOOTBALL_KEY') or os.environ.get('API_FOOTBALL_KEY') or '').strip()
+
+
+def is_apifootball_plan_error(message: str) -> bool:
+    lower = (message or '').lower()
+    return 'free plans do not have access' in lower or 'try from 2022 to 2024' in lower
+
+
+def count_finished_games(games) -> int:
+    total = 0
+    for game in games or []:
+        if game.get('finished') == 'TRUE':
+            total += 1
+            continue
+        if str(game.get('time_elapsed') or '').lower() == 'finished':
+            total += 1
+    return total
+
+
+def normalize_fallback_payload(endpoint, raw):
     if endpoint.endswith('/get/games'):
         return raw if isinstance(raw, list) else raw.get('games', raw)
     if endpoint.endswith('/get/groups'):
@@ -35,27 +79,21 @@ def normalize_api_payload(endpoint, raw):
     return raw
 
 
-def fetch_upstream_json(endpoint, timeout=25):
-    url = f'{API_BASE}{endpoint}'
+def fetch_fallback_json(endpoint, timeout=25):
+    url = f'{FALLBACK_API_BASE}{endpoint}'
     req = urllib.request.Request(
         url,
         headers={'User-Agent': 'worldcup-2026-local/1.0', 'Accept': 'application/json'},
     )
     with urllib.request.urlopen(req, timeout=timeout, context=SSL_CTX) as resp:
-        return normalize_api_payload(endpoint, json.loads(resp.read()))
+        return normalize_fallback_payload(endpoint, json.loads(resp.read()))
 
 
-def build_sync_payload(force=False):
-    now = time.time()
-    with SYNC_LOCK:
-        cached = SYNC_CACHE['payload']
-        if not force and cached and now - SYNC_CACHE['ts'] < SYNC_CACHE_TTL:
-            return {**cached, 'fromCache': True}, True
-
+def build_fallback_sync_payload():
     results = {}
     errors = []
     with ThreadPoolExecutor(max_workers=3) as pool:
-        futures = {pool.submit(fetch_upstream_json, ep): ep for ep in SYNC_ENDPOINTS}
+        futures = {pool.submit(fetch_fallback_json, ep): ep for ep in FALLBACK_SYNC_ENDPOINTS}
         for future in as_completed(futures):
             endpoint = futures[future]
             key = endpoint.rsplit('/', 1)[-1]
@@ -66,16 +104,60 @@ def build_sync_payload(force=False):
 
     if errors:
         raise RuntimeError('; '.join(errors))
-    if len(results) != len(SYNC_ENDPOINTS):
+    if len(results) != len(FALLBACK_SYNC_ENDPOINTS):
         raise RuntimeError('sync incomplete')
 
-    payload = {
+    return {
         'games': results['games'],
         'groups': results['groups'],
         'teams': results['teams'],
-        'syncedAt': int(now * 1000),
+        'source': 'worldcup26.ir',
         'fromCache': False,
     }
+
+
+def build_sync_payload(force=False):
+    global APIFOOTBALL_PLAN_BLOCKED_UNTIL
+    now = time.time()
+    with SYNC_LOCK:
+        cached = SYNC_CACHE['payload']
+        if not force and cached and now - SYNC_CACHE['ts'] < SYNC_CACHE_TTL:
+            return {**cached, 'fromCache': True}, True
+
+    api_key = get_apifootball_key()
+    payload = None
+    sync_error = None
+    fallback_reason = None
+
+    if api_key and now >= APIFOOTBALL_PLAN_BLOCKED_UNTIL:
+        try:
+            from apifootball_adapter import build_sync_payload as build_apifootball_payload
+
+            payload = build_apifootball_payload(api_key)
+        except Exception as exc:
+            sync_error = str(exc)
+            if is_apifootball_plan_error(sync_error):
+                fallback_reason = 'apifootball_plan'
+                APIFOOTBALL_PLAN_BLOCKED_UNTIL = now + 86400
+            else:
+                fallback_reason = 'apifootball_error'
+    elif api_key:
+        fallback_reason = 'apifootball_plan'
+
+    if payload is None:
+        from wcup2026_adapter import attach_scorers
+
+        payload = build_fallback_sync_payload()
+        payload['scorerFinishedGames'] = count_finished_games(payload.get('games'))
+        attach_scorers(payload)
+        if fallback_reason or sync_error:
+            payload['fallback'] = True
+            payload['fallbackReason'] = fallback_reason or 'apifootball_error'
+            if fallback_reason != 'apifootball_plan':
+                payload['syncError'] = sync_error
+
+    payload['syncedAt'] = int(now * 1000)
+    payload['fromCache'] = False
 
     with SYNC_LOCK:
         SYNC_CACHE['payload'] = payload
@@ -86,7 +168,7 @@ def build_sync_payload(force=False):
 
 class Handler(SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, directory=ROOT, **kwargs)
+        super().__init__(*args, directory=str(ROOT), **kwargs)
 
     def end_headers(self):
         if not self.path.startswith('/api/sync'):
@@ -153,7 +235,7 @@ class Handler(SimpleHTTPRequestHandler):
             self.send_error(404, 'API route not allowed')
             return
 
-        url = f'{API_BASE}{endpoint}'
+        url = f'{FALLBACK_API_BASE}{endpoint}'
         req = urllib.request.Request(
             url,
             headers={'User-Agent': 'worldcup-2026-local/1.0', 'Accept': 'application/json'},
@@ -183,6 +265,9 @@ class Handler(SimpleHTTPRequestHandler):
 if __name__ == '__main__':
     os.chdir(ROOT)
     server = ThreadingHTTPServer(('127.0.0.1', PORT), Handler)
+    source = 'worldcup26.ir + wcup2026.org' if get_apifootball_key() else 'worldcup26.ir'
+    if get_apifootball_key():
+        source += ' (API-Football 免费版不含 2026，已自动备用)'
     print(f'🏆 世界杯站点: http://127.0.0.1:{PORT}')
-    print(f'📡 聚合同步: http://127.0.0.1:{PORT}/api/sync')
+    print(f'📡 聚合同步: http://127.0.0.1:{PORT}/api/sync  [{source}]')
     server.serve_forever()

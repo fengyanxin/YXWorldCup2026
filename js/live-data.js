@@ -1,4 +1,4 @@
-/* 实时数据：从 worldcup26.ir 拉取并合并到 WC2026 */
+/* 实时数据：从 /api/sync 拉取（主源 API-Football，失败时 fallback worldcup26.ir） */
 /* API local_date 为球场当地时间，同步时按 stadium_id 换算为北京时间 */
 function matchPairKey(home, away) {
   return [home, away].sort().join(' vs ');
@@ -14,10 +14,27 @@ const LiveData = {
   teamsById: {},
   zhFlagMap: {},
   lastSync: null,
+  scorersSyncedAt: null,
+  scorersSource: 'none',
+  scorerFinishedGames: 0,
   error: null,
   syncing: false,
   pendingRefresh: null,
   onUpdate: null,
+  fallbackReason: null,
+
+  resolveScorersSource(payload) {
+    if (payload.source === 'apifootball') {
+      return payload.fromCache ? 'cache' : 'live';
+    }
+    if (payload.scorersSource === 'wcup2026.org') {
+      return 'wcup2026';
+    }
+    if (payload.fallback) {
+      return 'fallback';
+    }
+    return payload.fromCache ? 'cache' : 'live';
+  },
 
   sessionKey() {
     const buildId = window.__BUILD_ID__ || 'local';
@@ -31,19 +48,19 @@ const LiveData = {
 
     const snapshot = window.__SYNC_SNAPSHOT__;
     if (snapshot?.games?.length) {
-      this.applySyncPayload(snapshot);
+      this.applySyncPayload(snapshot, { includeScorers: false });
       this.lastSync = new Date(snapshot.syncedAt || Date.now());
       this.onUpdate?.('snapshot');
     } else {
       const cached = this.loadSessionCache();
       if (cached) {
-        this.applySyncPayload(cached);
+        this.applySyncPayload(cached, { includeScorers: false });
         this.lastSync = new Date(cached.syncedAt || Date.now());
         this.onUpdate?.('cache');
       }
     }
 
-    return this.refresh({ force: true });
+    return this.refresh({ force: true, reason: 'init' });
   },
 
   clearStaleSessionCaches() {
@@ -81,6 +98,46 @@ const LiveData = {
     }
   },
 
+  normalizeList(key, raw) {
+    if (Array.isArray(raw)) return raw;
+    if (key === 'games') return raw?.games || [];
+    if (key === 'groups') return raw?.groups || [];
+    if (key === 'teams') return raw?.teams || [];
+    return raw || [];
+  },
+
+  async fetchUpstream(key, path) {
+    const res = await fetch(`${this.API_PREFIX}${path}?_=${Date.now()}`, {
+      cache: 'no-store',
+      credentials: 'same-origin',
+      headers: { Accept: 'application/json' },
+    });
+    if (!res.ok) throw new Error(`API ${path} → ${res.status}`);
+    const raw = await res.json();
+    return this.normalizeList(key, raw);
+  },
+
+  async fetchSyncWithFallback(force = false) {
+    try {
+      return await this.fetchSync(force);
+    } catch (syncErr) {
+      const [games, groups, teams] = await Promise.all([
+        this.fetchUpstream('games', '/get/games'),
+        this.fetchUpstream('groups', '/get/groups'),
+        this.fetchUpstream('teams', '/get/teams'),
+      ]);
+      return {
+        games,
+        groups,
+        teams,
+        syncedAt: Date.now(),
+        fromCache: false,
+        fallback: true,
+        syncError: syncErr.message || String(syncErr),
+      };
+    }
+  },
+
   async fetchSync(force = false) {
     if (!force && window.__syncPrefetch) {
       const prefetched = await window.__syncPrefetch;
@@ -88,8 +145,10 @@ const LiveData = {
       if (prefetched?.games) return prefetched;
     }
 
-    const query = force ? '?force=1' : '';
-    const res = await fetch(`${this.API_PREFIX}/sync${query}`, {
+    const params = new URLSearchParams();
+    if (force) params.set('force', '1');
+    params.set('_', String(Date.now()));
+    const res = await fetch(`${this.API_PREFIX}/sync?${params.toString()}`, {
       cache: 'no-store',
       credentials: 'same-origin',
       headers: { Accept: 'application/json' },
@@ -98,7 +157,8 @@ const LiveData = {
     return res.json();
   },
 
-  applySyncPayload(payload) {
+  applySyncPayload(payload, options = {}) {
+    const includeScorers = options.includeScorers !== false;
     const teams = Array.isArray(payload.teams) ? payload.teams : payload.teams?.teams || [];
     this.teamsById = {};
     teams.forEach((t) => {
@@ -109,29 +169,34 @@ const LiveData = {
     const groups = Array.isArray(payload.groups) ? payload.groups : payload.groups?.groups || [];
     this.applyGames(games);
     this.applyStandings(groups);
-    this.applyScorers(games);
+    if (includeScorers) {
+      this.applyScorers(games, payload);
+    }
     this.applyLiveMatch();
   },
 
   async refresh(options = {}) {
     if (this.syncing) {
-      if (options.force) this.pendingRefresh = { force: true };
+      if (options.force) this.pendingRefresh = { ...options, force: true };
       return false;
     }
     this.syncing = true;
 
     try {
-      const payload = await this.fetchSync(Boolean(options.force));
-      this.applySyncPayload(payload);
+      const payload = await this.fetchSyncWithFallback(Boolean(options.force));
+      this.applySyncPayload(payload, { includeScorers: true });
       this.saveSessionCache(payload);
 
       this.lastSync = new Date(payload.syncedAt || Date.now());
-      this.error = null;
-      this.onUpdate?.(payload.fromCache ? 'cache' : 'fresh');
+      this.scorersSyncedAt = this.lastSync;
+      this.scorersSource = this.resolveScorersSource(payload);
+      this.fallbackReason = payload.fallbackReason || null;
+      this.error = payload.syncError || null;
+      this.onUpdate?.(payload.fromCache ? 'cache' : payload.fallback ? 'fallback' : 'fresh');
       return true;
     } catch (err) {
       this.error = err.message || '同步失败';
-      this.onUpdate?.(this.lastSync ? 'stale' : 'error');
+      this.onUpdate?.(this.scorersSyncedAt ? 'stale' : 'error');
       return false;
     } finally {
       this.syncing = false;
@@ -141,6 +206,10 @@ const LiveData = {
         await this.refresh(pending);
       }
     }
+  },
+
+  refreshScorers(options = {}) {
+    return this.refresh({ force: true, reason: 'scorers', ...options });
   },
 
   mapStatus(game) {
@@ -254,8 +323,17 @@ const LiveData = {
     });
   },
 
-  applyScorers(games) {
-    WC2026.scorers = buildScorersFromGames(games, this.teamsById, this.zhFlagMap);
+  applyScorers(games, payload = {}) {
+    if (Array.isArray(payload.scorers) && payload.scorers.length) {
+      WC2026.scorers = buildScorersFromApi(payload.scorers, this.teamsById, this.zhFlagMap);
+      this.scorerFinishedGames = Number(payload.scorerFinishedGames) || countScorerGames(games);
+    } else {
+      WC2026.scorers = buildScorersFromGames(games, this.teamsById, this.zhFlagMap);
+      this.scorerFinishedGames = countScorerGames(games);
+    }
+    this.scorersSyncedAt = new Date(payload.syncedAt || Date.now());
+    this.scorersSource = this.resolveScorersSource(payload);
+    this.fallbackReason = payload.fallbackReason || null;
   },
 
   applyLiveMatch() {

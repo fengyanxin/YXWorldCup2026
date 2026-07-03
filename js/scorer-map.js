@@ -166,7 +166,8 @@ const PLAYER_EN_TO_ZH = {
   'Ousmane Dembélé': '奥斯曼·登贝莱',
   'Rvbn Vargas': '鲁文·瓦尔加斯',
   'Rvmanv Ashmid': '罗曼诺·施密德',
-  'Cristiano Ronaldo': 'C罗',
+    'Cristiano Ronaldo': '克里斯蒂亚诺·罗纳尔多',
+    'C. Ronaldo': '克里斯蒂亚诺·罗纳尔多',
   'Leandro Trossard': '特罗萨德',
   'Riyad Mahrez': '马赫雷斯',
   'Nicolas Pépé': '尼古拉·佩佩',
@@ -256,7 +257,7 @@ const PLAYER_EN_TO_ZH = {
 
 const LASTNAME_TO_ZH = {
   Messi: '梅西',
-  Kane: '凯恩',
+  Ronaldo: '罗纳尔多',
   Mbappé: '姆巴佩',
   Haaland: '哈兰德',
   Havertz: '哈弗茨',
@@ -443,9 +444,9 @@ function normalizePlayerName(name) {
 function parseScorersField(raw) {
   if (!raw || raw === 'null') return [];
 
-  const s = normalizeQuotes(raw);
+  const s = normalizeQuotes(raw).replace(/(\d+)'+(\d+'?)/g, '$1+$2');
   const results = [];
-  const re = /([^",{]+?)\s+(\d+(?:\+\d+)?)'(?:\(OG\))?/gu;
+  const re = /([^",{]+?)\s+(\d+(?:\+\d+)?)\s*'(?:\(OG\))?/gu;
 
   let m;
   while ((m = re.exec(s)) !== null) {
@@ -457,6 +458,19 @@ function parseScorersField(raw) {
   }
 
   return results;
+}
+
+function gameCountsForScorers(game) {
+  if (game.finished === 'TRUE') return true;
+  const elapsed = String(game.time_elapsed || '').toLowerCase();
+  if (elapsed === 'finished') return true;
+
+  const hasParsedScorers = (side) => parseScorersField(game[`${side}_scorers`]).length > 0;
+  return hasParsedScorers('home') || hasParsedScorers('away');
+}
+
+function countScorerGames(games) {
+  return (games || []).filter((g) => gameCountsForScorers(g)).length;
 }
 
 function stripAccents(value) {
@@ -673,18 +687,25 @@ function phoneticLatinToZh(name) {
     .join('·');
 }
 
-function playerNameZh(name) {
-  const snapshot = getPlayerZhSnapshot();
+function isGarbledZhName(zh) {
+  if (!zh) return true;
+  return hasLatinText(zh);
+}
+
+function resolvePlayerZh(name) {
   const raw = normalizePlayerName(name);
-  if (snapshot?.[raw]) return snapshot[raw];
-  if (snapshot?.[name]) return snapshot[name];
-
   const canonical = repairPlayerName(raw);
-  if (snapshot?.[canonical]) return snapshot[canonical];
+  const candidates = [canonical, raw, name];
 
-  if (PLAYER_EN_TO_ZH[canonical]) return PLAYER_EN_TO_ZH[canonical];
-  if (PLAYER_EN_TO_ZH[raw]) return PLAYER_EN_TO_ZH[raw];
-  if (PLAYER_EN_TO_ZH[name]) return PLAYER_EN_TO_ZH[name];
+  for (const key of candidates) {
+    if (PLAYER_EN_TO_ZH[key]) return PLAYER_EN_TO_ZH[key];
+  }
+
+  const snapshot = getPlayerZhSnapshot();
+  for (const key of candidates) {
+    const zh = snapshot?.[key];
+    if (zh && !isGarbledZhName(zh)) return zh;
+  }
 
   const lastnameZh = lookupLastnameZh(canonical);
   if (lastnameZh) {
@@ -700,11 +721,15 @@ function playerNameZh(name) {
   return hasLatinText(phonetic) ? phoneticLatinToZh(repairPlayerName(raw)) : phonetic;
 }
 
+function playerNameZh(name) {
+  return resolvePlayerZh(name);
+}
+
 function buildScorersFromGames(games, teamsById, zhFlagMap) {
   const agg = new Map();
 
   games.forEach((g) => {
-    if (g.finished !== 'TRUE' && String(g.time_elapsed || '').toLowerCase() !== 'finished') return;
+    if (!gameCountsForScorers(g)) return;
 
     ['home', 'away'].forEach((side) => {
       const teamEn = g[`${side}_team_name_en`] || g[`${side}_team_label`];
@@ -737,5 +762,29 @@ function buildScorersFromGames(games, teamsById, zhFlagMap) {
   return sorted.map((s, i) => {
     if (i > 0 && s.goals < sorted[i - 1].goals) rank = i + 1;
     return { rank, ...s };
+  });
+}
+
+function buildScorersFromApi(apiScorers, teamsById, zhFlagMap) {
+  const rows = (apiScorers || []).map((row, i) => {
+    const playerEn = row.playerEn || row.player || '';
+    const teamEn = row.teamEn || row.team || '';
+    const teamZh = teamNameZh(teamEn, teamsById);
+    return {
+      rank: i + 1,
+      playerEn,
+      player: playerNameZh(playerEn),
+      team: teamZh,
+      flag: teamFlagZh(teamZh, zhFlagMap),
+      goals: Number(row.goals) || 0,
+      assists: Number(row.assists) || 0,
+      minutes: row.minutes || '-',
+    };
+  });
+
+  let rank = 1;
+  return rows.map((s, i) => {
+    if (i > 0 && s.goals < rows[i - 1].goals) rank = i + 1;
+    return { ...s, rank };
   });
 }
