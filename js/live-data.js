@@ -16,6 +16,7 @@ const LiveData = {
   lastSync: null,
   error: null,
   syncing: false,
+  pendingRefresh: null,
   onUpdate: null,
 
   sessionKey() {
@@ -42,7 +43,7 @@ const LiveData = {
       }
     }
 
-    return this.refresh();
+    return this.refresh({ force: true });
   },
 
   clearStaleSessionCaches() {
@@ -113,7 +114,10 @@ const LiveData = {
   },
 
   async refresh(options = {}) {
-    if (this.syncing) return;
+    if (this.syncing) {
+      if (options.force) this.pendingRefresh = { force: true };
+      return false;
+    }
     this.syncing = true;
 
     try {
@@ -124,11 +128,18 @@ const LiveData = {
       this.lastSync = new Date(payload.syncedAt || Date.now());
       this.error = null;
       this.onUpdate?.(payload.fromCache ? 'cache' : 'fresh');
+      return true;
     } catch (err) {
       this.error = err.message || '同步失败';
-      if (!this.lastSync) this.onUpdate?.('error');
+      this.onUpdate?.(this.lastSync ? 'stale' : 'error');
+      return false;
     } finally {
       this.syncing = false;
+      if (this.pendingRefresh) {
+        const pending = this.pendingRefresh;
+        this.pendingRefresh = null;
+        await this.refresh(pending);
+      }
     }
   },
 
@@ -244,8 +255,7 @@ const LiveData = {
   },
 
   applyScorers(games) {
-    const rows = buildScorersFromGames(games, this.teamsById, this.zhFlagMap);
-    if (rows.length) WC2026.scorers = rows;
+    WC2026.scorers = buildScorersFromGames(games, this.teamsById, this.zhFlagMap);
   },
 
   applyLiveMatch() {

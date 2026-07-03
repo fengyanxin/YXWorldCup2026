@@ -100,20 +100,7 @@ const WC2026 = {
     ],
   },
 
-  scorers: [
-    { rank: 1, player: '梅西', team: '阿根廷', flag: '🇦🇷', goals: 3, assists: 0, minutes: 90 },
-    { rank: 2, player: '凯恩', team: '英格兰', flag: '🏴󠁧󠁢󠁥󠁮󠁧󠁿', goals: 2, assists: 1, minutes: 90 },
-    { rank: 2, player: '姆巴佩', team: '法国', flag: '🇫🇷', goals: 2, assists: 0, minutes: 90 },
-    { rank: 2, player: '哈兰德', team: '挪威', flag: '🇳🇴', goals: 2, assists: 0, minutes: 90 },
-    { rank: 2, player: '哈弗茨', team: '德国', flag: '🇩🇪', goals: 2, assists: 0, minutes: 90 },
-    { rank: 2, player: '巴洛贡', team: '美国', flag: '🇺🇸', goals: 2, assists: 0, minutes: 77 },
-    { rank: 2, player: '阿亚里', team: '瑞典', flag: '🇸🇪', goals: 2, assists: 0, minutes: 90 },
-    { rank: 8, player: '维尼修斯', team: '巴西', flag: '🇧🇷', goals: 1, assists: 0, minutes: 90 },
-    { rank: 8, player: '贝林厄姆', team: '英格兰', flag: '🏴󠁧󠁢󠁥󠁮󠁧󠁿', goals: 1, assists: 1, minutes: 90 },
-    { rank: 8, player: '迪亚斯', team: '哥伦比亚', flag: '🇨🇴', goals: 1, assists: 1, minutes: 90 },
-    { rank: 8, player: '穆西亚拉', team: '德国', flag: '🇩🇪', goals: 1, assists: 2, minutes: 85 },
-    { rank: 8, player: '希门尼斯', team: '墨西哥', flag: '🇲🇽', goals: 1, assists: 0, minutes: 79 },
-  ],
+  scorers: [],
 
   matches: [
     { id: 1, date: '2026-06-12', time: '03:00', timeET: '15:00 ET', group: 'A', home: '墨西哥', homeFlag: '🇲🇽', away: '南非', awayFlag: '🇿🇦', venue: '墨西哥城', status: 'finished', score: [2, 0] },
