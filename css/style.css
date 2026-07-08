@@ -1899,9 +1899,35 @@ body.home-view .hero-video-bg {
 
 .scorer-rank.top { color: var(--gold-bright); }
 
-.scorer-info { display: flex; flex-direction: column; }
+.scorer-info { display: flex; flex-direction: column; gap: 4px; }
 .scorer-name { font-weight: 600; font-size: 15px; }
-.scorer-team { font-size: 12px; color: var(--text-dim); }
+.scorer-team {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.scorer-team-flag {
+  flex-shrink: 0;
+  font-size: 15px;
+  line-height: 1;
+}
+
+.scorers-table-head {
+  display: grid;
+  grid-template-columns: 40px 1fr 60px 60px 60px;
+  gap: 12px;
+  padding: 8px 20px;
+  margin-bottom: 4px;
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.scorers-table-head span:not(:nth-child(2)) {
+  text-align: center;
+}
 
 .scorer-stat {
   text-align: center;

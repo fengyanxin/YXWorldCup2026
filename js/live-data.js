@@ -175,6 +175,7 @@ const LiveData = {
     const groups = Array.isArray(payload.groups) ? payload.groups : payload.groups?.groups || [];
     this.applyGames(games);
     this.applyStandings(groups);
+    this.zhFlagMap = buildZhFlagMap();
     if (includeScorers) {
       this.applyScorers(games, payload);
     }
@@ -290,8 +291,8 @@ const LiveData = {
 
       match.home = home;
       match.away = away;
-      match.homeFlag = teamFlagZh(home, this.zhFlagMap);
-      match.awayFlag = teamFlagZh(away, this.zhFlagMap);
+      match.homeFlag = teamFlagZh(home, this.zhFlagMap, homeEn, this.teamsById);
+      match.awayFlag = teamFlagZh(away, this.zhFlagMap, awayEn, this.teamsById);
       match.group = this.mapGroup(g.group, g.type);
       match.stage = this.mapStage(g);
       match.status = status;
@@ -316,7 +317,7 @@ const LiveData = {
           const zh = teamNameZh(teamInfo?.name_en, this.teamsById, t.team_id);
           return {
             team: zh,
-            flag: teamFlagZh(zh, this.zhFlagMap),
+            flag: teamFlagZh(zh, this.zhFlagMap, teamInfo?.name_en, this.teamsById),
             p: Number(t.mp) || 0,
             w: Number(t.w) || 0,
             d: Number(t.d) || 0,

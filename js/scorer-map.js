@@ -734,8 +734,7 @@ function buildScorersFromGames(games, teamsById, zhFlagMap) {
     ['home', 'away'].forEach((side) => {
       const teamEn = g[`${side}_team_name_en`] || g[`${side}_team_label`];
       const teamId = g[`${side}_team_id`];
-      const teamZh = teamNameZh(teamEn, teamsById, teamId);
-      const flag = teamFlagZh(teamZh, zhFlagMap);
+      const { team: teamZh, teamFlag: flag } = resolveScorerTeam(teamEn, teamsById, zhFlagMap);
 
       parseScorersField(g[`${side}_scorers`]).forEach(({ name }) => {
         const key = `${teamEn || teamZh}::${playerKey(name)}`;
@@ -743,6 +742,7 @@ function buildScorersFromGames(games, teamsById, zhFlagMap) {
           playerEn: name,
           player: playerNameZh(name),
           team: teamZh,
+          teamFlag: flag,
           flag,
           goals: 0,
           assists: 0,
@@ -769,13 +769,14 @@ function buildScorersFromApi(apiScorers, teamsById, zhFlagMap) {
   const rows = (apiScorers || []).map((row, i) => {
     const playerEn = row.playerEn || row.player || '';
     const teamEn = row.teamEn || row.team || '';
-    const teamZh = teamNameZh(teamEn, teamsById);
+    const { team: teamZh, teamFlag } = resolveScorerTeam(teamEn, teamsById, zhFlagMap);
     return {
       rank: i + 1,
       playerEn,
       player: playerNameZh(playerEn),
       team: teamZh,
-      flag: teamFlagZh(teamZh, zhFlagMap),
+      teamFlag,
+      flag: teamFlag,
       goals: Number(row.goals) || 0,
       assists: Number(row.assists) || 0,
       minutes: row.minutes || '-',

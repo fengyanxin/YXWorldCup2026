@@ -1243,9 +1243,8 @@ function renderScorers() {
   }
 
   $('#scorersTable').innerHTML = `
-    <div style="display:grid;grid-template-columns:40px 1fr 60px 60px 60px;gap:12px;padding:8px 20px;font-size:12px;color:var(--text-dim);margin-bottom:4px;">
-      <span>#</span><span>球员</span><span style="text-align:center">进球</span>
-      <span style="text-align:center">助攻</span><span style="text-align:center">分钟</span>
+    <div class="scorers-table-head">
+      <span>#</span><span>球员 / 国家</span><span>进球</span><span>助攻</span><span>分钟</span>
     </div>
     ${rows
       .map(
@@ -1253,8 +1252,8 @@ function renderScorers() {
       <div class="scorer-row">
         <span class="scorer-rank ${s.rank <= 2 ? 'top' : ''}">${s.rank}</span>
         <div class="scorer-info">
-          <span class="scorer-name">${s.flag} ${s.player}</span>
-          <span class="scorer-team">${s.team}</span>
+          <span class="scorer-name">${s.player}</span>
+          <span class="scorer-team"><span class="scorer-team-flag">${s.teamFlag || s.flag || '⚽'}</span>${s.team}</span>
         </div>
         <span class="scorer-stat scorer-goals">${s.goals}</span>
         <span class="scorer-stat">${s.assists}</span>

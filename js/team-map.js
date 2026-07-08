@@ -61,7 +61,50 @@ const TEAM_EN_TO_ZH = {
   'Congo DR': '刚果(金)',
 };
 
-function buildZhFlagMap() {
+const TEAM_EN_ALIASES = {
+  'Bosnia & Herzegovina': 'Bosnia and Herzegovina',
+  'Bosnia-Herzegovina': 'Bosnia and Herzegovina',
+  'Korea Republic': 'South Korea',
+  'Republic of Korea': 'South Korea',
+  'United States of America': 'United States',
+  'Cabo Verde': 'Cape Verde',
+  "Côte d'Ivoire": 'Ivory Coast',
+  'Cote d Ivoire': 'Ivory Coast',
+  'IR Iran': 'Iran',
+  Türkiye: 'Turkey',
+};
+
+const SPECIAL_ISO_FLAGS = {
+  SCO: '🏴󠁧󠁢󠁳󠁣󠁴󠁿',
+  ENG: '🏴󠁧󠁢󠁥󠁮󠁧󠁿',
+};
+
+let TEAM_ZH_TO_FLAG = null;
+let TEAM_EN_TO_FLAG = null;
+
+function normalizeTeamEn(name) {
+  if (!name) return '';
+  const trimmed = String(name).trim();
+  return TEAM_EN_ALIASES[trimmed] || trimmed;
+}
+
+function findTeamRecord(englishName, teamsById) {
+  const target = normalizeTeamEn(englishName).toLowerCase();
+  for (const t of Object.values(teamsById || {})) {
+    if (normalizeTeamEn(t.name_en).toLowerCase() === target) return t;
+  }
+  return null;
+}
+
+function iso2ToFlagEmoji(iso2) {
+  if (!iso2) return null;
+  const upper = String(iso2).toUpperCase();
+  if (SPECIAL_ISO_FLAGS[upper]) return SPECIAL_ISO_FLAGS[upper];
+  if (upper.length !== 2 || !/^[A-Z]{2}$/.test(upper)) return null;
+  return String.fromCodePoint(...[...upper].map((c) => 0x1f1e6 + c.charCodeAt(0) - 65));
+}
+
+function buildTeamZhFlagMap() {
   const map = {};
   Object.values(WC2026.standings).forEach((rows) => {
     rows.forEach((r) => {
@@ -71,15 +114,68 @@ function buildZhFlagMap() {
   return map;
 }
 
+function getTeamEnToFlag() {
+  if (TEAM_EN_TO_FLAG) return TEAM_EN_TO_FLAG;
+  const zhFlags = buildTeamZhFlagMap();
+  TEAM_EN_TO_FLAG = {};
+  Object.entries(TEAM_EN_TO_ZH).forEach(([en, zh]) => {
+    if (zhFlags[zh]) TEAM_EN_TO_FLAG[en] = zhFlags[zh];
+  });
+  Object.entries(TEAM_EN_ALIASES).forEach(([alias, canonical]) => {
+    if (TEAM_EN_TO_FLAG[canonical]) TEAM_EN_TO_FLAG[alias] = TEAM_EN_TO_FLAG[canonical];
+  });
+  return TEAM_EN_TO_FLAG;
+}
+
+function buildZhFlagMap() {
+  if (!TEAM_ZH_TO_FLAG) TEAM_ZH_TO_FLAG = buildTeamZhFlagMap();
+  return { ...TEAM_ZH_TO_FLAG };
+}
+
 function teamNameZh(englishName, teamsById, teamId) {
-  if (teamId && teamsById[teamId]) {
+  if (teamId && teamsById?.[teamId]) {
     const en = teamsById[teamId].name_en;
-    if (TEAM_EN_TO_ZH[en]) return TEAM_EN_TO_ZH[en];
+    const zh = TEAM_EN_TO_ZH[normalizeTeamEn(en)] || TEAM_EN_TO_ZH[en];
+    if (zh) return zh;
   }
+
+  const normalized = normalizeTeamEn(englishName);
+  if (TEAM_EN_TO_ZH[normalized]) return TEAM_EN_TO_ZH[normalized];
   if (englishName && TEAM_EN_TO_ZH[englishName]) return TEAM_EN_TO_ZH[englishName];
+
+  const rec = findTeamRecord(englishName, teamsById);
+  if (rec) {
+    const zh = TEAM_EN_TO_ZH[normalizeTeamEn(rec.name_en)] || TEAM_EN_TO_ZH[rec.name_en];
+    if (zh) return zh;
+  }
+
   return englishName || '待定';
 }
 
-function teamFlagZh(chineseName, zhFlagMap) {
-  return zhFlagMap[chineseName] || '🏳️';
+function teamFlagZh(chineseName, zhFlagMap, englishName, teamsById) {
+  const zhFlags = zhFlagMap || TEAM_ZH_TO_FLAG || buildTeamZhFlagMap();
+  if (chineseName && zhFlags[chineseName] && zhFlags[chineseName] !== '🏳️') {
+    return zhFlags[chineseName];
+  }
+
+  const enFlags = getTeamEnToFlag();
+  const normalized = normalizeTeamEn(englishName);
+  if (enFlags[normalized]) return enFlags[normalized];
+  if (englishName && enFlags[englishName]) return enFlags[englishName];
+
+  const rec = findTeamRecord(englishName, teamsById);
+  if (rec) {
+    const zh = teamNameZh(rec.name_en, teamsById);
+    if (zhFlags[zh]) return zhFlags[zh];
+    const fromIso = iso2ToFlagEmoji(rec.iso2);
+    if (fromIso) return fromIso;
+  }
+
+  return '⚽';
+}
+
+function resolveScorerTeam(teamEn, teamsById, zhFlagMap) {
+  const team = teamNameZh(teamEn, teamsById);
+  const teamFlag = teamFlagZh(team, zhFlagMap, teamEn, teamsById);
+  return { team, teamFlag, flag: teamFlag };
 }
